@@ -18,7 +18,7 @@ namespace FraFactu.Application.Interfaces
         /// el claim toma el fallback <c>[emisorId]</c> (back-compat con login
         /// local y con SSO desde un Hub que aun no expone el campo).
         /// </summary>
-        string GenerateJwtToken(int usuarioId, string email, string nombreCompleto, int? emisorId, string? emisorNombre, int rolId, string rolNombre, bool accesoTodasSucursales, List<int> sucursalIds, int? hubUsuarioId = null, int? tokenVersion = null, List<int>? emisoresAccesibles = null);
+        string GenerateJwtToken(int usuarioId, string email, string nombreCompleto, int? emisorId, string? emisorNombre, int rolId, string rolNombre, bool accesoTodasSucursales, List<int> sucursalIds, int? hubUsuarioId = null, int? tokenVersion = null, List<int>? emisoresAccesibles = null, bool pwdChangeRequired = false);
 
         /// <summary>
         /// Hashea una contraseña usando BCrypt
@@ -35,6 +35,38 @@ namespace FraFactu.Application.Interfaces
         /// Cambia la contraseña de un usuario
         /// </summary>
         Task<bool> ChangePasswordAsync(int usuarioId, string currentPassword, string newPassword);
+
+        /// <summary>
+        /// Cierra la sesión del usuario incrementando su <c>TokenVersion</c>, lo
+        /// que invalida todos los JWT emitidos hasta el momento (revocación local).
+        /// </summary>
+        Task<bool> LogoutAsync(int usuarioId);
+
+        /// <summary>
+        /// Inicia el flujo "olvidé mi contraseña". Si existe un usuario activo con
+        /// ese email, genera un token de reset (guarda solo su hash + expiración) y
+        /// envía el correo con el enlace. No revela si el email existe o no: el
+        /// método siempre completa sin error (protección anti-enumeración).
+        /// </summary>
+        Task ForgotPasswordAsync(string email);
+
+        /// <summary>
+        /// Completa el reset de contraseña con el token recibido por correo.
+        /// Valida hash + vigencia, es de un solo uso (limpia el token), fija la
+        /// nueva contraseña e incrementa <c>TokenVersion</c> (revoca sesiones).
+        /// Devuelve false si el token es inválido, expiró o ya se usó.
+        /// </summary>
+        Task<bool> ResetPasswordAsync(string token, string newPassword);
+
+        /// <summary>
+        /// Cambio de contraseña obligatorio en el primer ingreso. El usuario llega
+        /// autenticado con un JWT restringido (emitido tras validar su clave
+        /// temporal), por lo que no se pide la contraseña actual. Limpia
+        /// <c>RequiereCambioPwd</c>/<c>ExpiracionPwdTemporal</c>, incrementa
+        /// <c>TokenVersion</c> (invalida el token restringido) y devuelve un JWT
+        /// completo. Devuelve null si el usuario no existe o no tenía cambio pendiente.
+        /// </summary>
+        Task<LoginResponseDto?> ChangePasswordFirstLoginAsync(int usuarioId, string newPassword);
 
         /// <summary>
         /// Cambia el ambiente (Pruebas/Producción) del Emisor especificado.

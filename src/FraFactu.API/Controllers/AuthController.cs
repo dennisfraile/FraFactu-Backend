@@ -53,6 +53,43 @@ namespace FraFactu.API.Controllers
         }
 
         /// <summary>
+        /// Inicia el flujo "olvidé mi contraseña". Siempre responde 200 aunque el
+        /// email no exista (protección anti-enumeración). Si existe, se envía un
+        /// correo con el enlace de reset.
+        /// </summary>
+        [HttpPost("forgot-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+                await _authService.ForgotPasswordAsync(dto.Email.Trim());
+
+            return Ok(new { message = "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña." });
+        }
+
+        /// <summary>
+        /// Completa el reset de contraseña con el token recibido por correo.
+        /// </summary>
+        [HttpPost("reset-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Token)
+                || string.IsNullOrWhiteSpace(dto.NewPassword)
+                || dto.NewPassword != dto.ConfirmPassword)
+            {
+                return BadRequest(new { message = "Datos inválidos: revisa el token y que las contraseñas coincidan." });
+            }
+
+            var ok = await _authService.ResetPasswordAsync(dto.Token, dto.NewPassword);
+            if (!ok)
+                return BadRequest(new { message = "El enlace de restablecimiento es inválido o ha expirado." });
+
+            return Ok(new { message = "Contraseña restablecida. Ya puedes iniciar sesión." });
+        }
+
+        /// <summary>
         /// Cambia la contraseña del usuario autenticado
         /// </summary>
         [HttpPost("change-password")]
@@ -72,6 +109,51 @@ namespace FraFactu.API.Controllers
                 return BadRequest(new { message = "No se pudo cambiar la contraseña. Verifica tu contraseña actual." });
 
             return Ok(new { message = "Contraseña cambiada exitosamente" });
+        }
+
+        /// <summary>
+        /// Cambio de contraseña obligatorio en el primer ingreso. El usuario llega
+        /// con un token restringido (claim pwd_change_required) tras autenticarse
+        /// con su clave temporal. Devuelve un JWT completo al cambiarla.
+        /// </summary>
+        [HttpPost("change-password-first-login")]
+        [Authorize]
+        [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<LoginResponseDto>> ChangePasswordFirstLogin([FromBody] ChangePasswordFirstLoginDto dto)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+                return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword != dto.ConfirmPassword)
+                return BadRequest(new { message = "La nueva contraseña y su confirmación no coinciden." });
+
+            var result = await _authService.ChangePasswordFirstLoginAsync(userId, dto.NewPassword);
+            if (result == null)
+                return BadRequest(new { message = "No hay un cambio de contraseña pendiente para este usuario." });
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Cierra la sesión del usuario autenticado. Incrementa su TokenVersion,
+        /// lo que invalida de inmediato todos los JWT emitidos hasta ahora
+        /// (revocación local). El cliente debe descartar su token tras esta llamada.
+        /// </summary>
+        [HttpPost("logout")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult> Logout()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+                return Unauthorized();
+
+            await _authService.LogoutAsync(userId);
+            return Ok(new { message = "Sesión cerrada." });
         }
 
         /// <summary>
@@ -310,7 +392,9 @@ namespace FraFactu.API.Controllers
 
             var sucursalIds = usuario.UsuarioSucursales.Select(us => us.SucursalId).ToList();
 
-            // Generar nuevo token con el contexto seleccionado
+            // Generar nuevo token con el contexto seleccionado. Se propaga
+            // token_version desde Usuario.TokenVersion para que el JWT reemitido
+            // siga pasando la validación de revocación local (OnTokenValidated).
             var tokenString = _authService.GenerateJwtToken(
                 usuario.Id,
                 usuario.Email,
@@ -320,7 +404,8 @@ namespace FraFactu.API.Controllers
                 usuario.RolId,
                 usuario.Rol.Nombre,
                 usuario.AccesoTodasSucursales,
-                sucursalIds
+                sucursalIds,
+                tokenVersion: usuario.TokenVersion
             );
 
             return Ok(new
