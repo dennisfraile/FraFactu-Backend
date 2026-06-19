@@ -1,0 +1,76 @@
+  Determinando los proyectos que se van a restaurar...
+  Todos los proyectos est├ín actualizados para la restauraci├│n.
+  Facturacion.Domain -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.Domain\bin\Debug\net8.0\Facturacion.Domain.dll
+  Facturacion.Application -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.Application\bin\Debug\net8.0\Facturacion.Application.dll
+  Facturacion.Infrastructure -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.Infrastructure\bin\Debug\net8.0\Facturacion.Infrastructure.dll
+  Facturacion.API -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.API\bin\Debug\net8.0\Facturacion.API.dll
+  Facturacion.Tests -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\bin\Debug\net8.0\Facturacion.Tests.dll
+Serie de pruebas para C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\bin\Debug\net8.0\Facturacion.Tests.dll (.NETCoreApp,Version=v8.0)
+Versi├│n 17.14.1 (x64) de VSTest
+
+Iniciando la ejecuci├│n de pruebas, espere...
+1 archivos de prueba en total coincidieron con el patr├│n especificado.
+[xUnit.net 00:00:02.11]     Facturacion.Tests.IntegrationTests.Services.FacturaServiceTests.ObtenerFactura_PorId_DebeRetornarFacturaCorrecta [FAIL]
+[xUnit.net 00:00:02.17]     Facturacion.Tests.IntegrationTests.Services.FacturaServiceTests.CrearFactura_DebeCalcularTotalesCorrectamente [FAIL]
+[xUnit.net 00:00:02.24]     Facturacion.Tests.IntegrationTests.Services.FacturaServiceTests.CrearFactura_ConDatosBasicos_DebeGenerarCodigoGeneracion [FAIL]
+  Con error Facturacion.Tests.IntegrationTests.Services.FacturaServiceTests.ObtenerFactura_PorId_DebeRetornarFacturaCorrecta [1 ms]
+  Mensaje de error:
+   System.ArgumentException : An item with the same key has already been added. Key: 1
+  Seguimiento de la pila:
+     at System.Collections.Generic.Dictionary`2.TryInsert(TKey key, TValue value, InsertionBehavior behavior)
+   at System.Collections.Generic.Dictionary`2.Add(TKey key, TValue value)
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry, IDiagnosticsLogger`1 updateLogger)
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryStore.ExecuteTransaction(IList`1 entries, IDiagnosticsLogger`1 updateLogger)
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryDatabase.SaveChanges(IList`1 entries)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(IList`1 entriesToSave)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(StateManager stateManager, Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.<>c.<SaveChanges>b__112_0(DbContext _, ValueTuple`2 t)
+   at Microsoft.EntityFrameworkCore.Storage.NonRetryingExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChanges(Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChanges()
+   at Facturacion.Tests.Fixtures.TestDatabaseHelper.SeedTestData(ApplicationDbContext context) in C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\Fixtures\TestDatabaseHelper.cs:line 31
+   at Facturacion.Tests.IntegrationTests.Services.FacturaServiceTests..ctor() in C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\IntegrationTests\Services\FacturaServiceTests.cs:line 21
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Con error Facturacion.Tests.IntegrationTests.Services.FacturaServiceTests.CrearFactura_DebeCalcularTotalesCorrectamente [1 ms]
+  Mensaje de error:
+   System.ArgumentException : An item with the same key has already been added. Key: 1
+  Seguimiento de la pila:
+     at System.Collections.Generic.Dictionary`2.TryInsert(TKey key, TValue value, InsertionBehavior behavior)
+   at System.Collections.Generic.Dictionary`2.Add(TKey key, TValue value)
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry, IDiagnosticsLogger`1 updateLogger)
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryStore.ExecuteTransaction(IList`1 entries, IDiagnosticsLogger`1 updateLogger)
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryDatabase.SaveChanges(IList`1 entries)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(IList`1 entriesToSave)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(StateManager stateManager, Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.<>c.<SaveChanges>b__112_0(DbContext _, ValueTuple`2 t)
+   at Microsoft.EntityFrameworkCore.Storage.NonRetryingExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChanges(Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChanges()
+   at Facturacion.Tests.Fixtures.TestDatabaseHelper.SeedTestData(ApplicationDbContext context) in C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\Fixtures\TestDatabaseHelper.cs:line 31
+   at Facturacion.Tests.IntegrationTests.Services.FacturaServiceTests..ctor() in C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\IntegrationTests\Services\FacturaServiceTests.cs:line 21
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Con error Facturacion.Tests.IntegrationTests.Services.FacturaServiceTests.CrearFactura_ConDatosBasicos_DebeGenerarCodigoGeneracion [1 ms]
+  Mensaje de error:
+   System.ArgumentException : An item with the same key has already been added. Key: 1
+  Seguimiento de la pila:
+     at System.Collections.Generic.Dictionary`2.TryInsert(TKey key, TValue value, InsertionBehavior behavior)
+   at System.Collections.Generic.Dictionary`2.Add(TKey key, TValue value)
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry, IDiagnosticsLogger`1 updateLogger)
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryStore.ExecuteTransaction(IList`1 entries, IDiagnosticsLogger`1 updateLogger)
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryDatabase.SaveChanges(IList`1 entries)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(IList`1 entriesToSave)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(StateManager stateManager, Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.<>c.<SaveChanges>b__112_0(DbContext _, ValueTuple`2 t)
+   at Microsoft.EntityFrameworkCore.Storage.NonRetryingExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChanges(Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChanges(Boolean acceptAllChangesOnSuccess)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChanges()
+   at Facturacion.Tests.Fixtures.TestDatabaseHelper.SeedTestData(ApplicationDbContext context) in C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\Fixtures\TestDatabaseHelper.cs:line 31
+   at Facturacion.Tests.IntegrationTests.Services.FacturaServiceTests..ctor() in C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\IntegrationTests\Services\FacturaServiceTests.cs:line 21
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+
+Con error! - Con error:     3, Superado:     0, Omitido:     0, Total:     3, Duraci├│n: 122 ms - Facturacion.Tests.dll (net8.0)
+
+Hay actualizaciones de carga de trabajo disponibles. Ejecute "dotnet workload list" para obtener m├ís informaci├│n.

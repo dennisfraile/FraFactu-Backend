@@ -1,0 +1,32 @@
+# Artefactos de build
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# IDE / VCS
+.git/
+.gitignore
+.vs/
+.vscode/
+.idea/
+
+# Config local con secretos
+**/appsettings.Development.json
+**/appsettings.Production.json
+.env
+.env.local
+.env.*.local
+
+# Docker / docs
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+README.md
+docs/
+**/*.md
+
+# Logs y temporales
+**/*.log
+**/*.tmp
+.claude/

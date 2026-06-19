@@ -1,0 +1,64 @@
+  Determinando los proyectos que se van a restaurar...
+  Todos los proyectos est├ín actualizados para la restauraci├│n.
+  Facturacion.Domain -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.Domain\bin\Debug\net8.0\Facturacion.Domain.dll
+  Facturacion.Application -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.Application\bin\Debug\net8.0\Facturacion.Application.dll
+  Facturacion.Infrastructure -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.Infrastructure\bin\Debug\net8.0\Facturacion.Infrastructure.dll
+  Facturacion.API -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.API\bin\Debug\net8.0\Facturacion.API.dll
+  Facturacion.Tests -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\bin\Debug\net8.0\Facturacion.Tests.dll
+Serie de pruebas para C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\bin\Debug\net8.0\Facturacion.Tests.dll (.NETCoreApp,Version=v8.0)
+Versi├│n 17.14.1 (x64) de VSTest
+
+Iniciando la ejecuci├│n de pruebas, espere...
+1 archivos de prueba en total coincidieron con el patr├│n especificado.
+C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\bin\Debug\net8.0\Facturacion.Tests.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.22)
+[xUnit.net 00:00:00.09]   Discovering: Facturacion.Tests
+[xUnit.net 00:00:00.15]   Discovered:  Facturacion.Tests
+[xUnit.net 00:00:00.16]   Starting:    Facturacion.Tests
+warn: Microsoft.EntityFrameworkCore.Model.Validation[10400]
+      Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+info: Microsoft.EntityFrameworkCore.Update[30100]
+      Saved 1113 entities to in-memory store.
+info: Microsoft.EntityFrameworkCore.Update[30100]
+      Saved 35 entities to in-memory store.
+info: Microsoft.EntityFrameworkCore.Update[30100]
+      Saved 1 entities to in-memory store.
+info: Microsoft.EntityFrameworkCore.Update[30100]
+      Saved 1 entities to in-memory store.
+info: Microsoft.EntityFrameworkCore.Update[30100]
+      Saved 2 entities to in-memory store.
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+[xUnit.net 00:00:02.64]     Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_Facturas_DebeRetornar200 [FAIL]
+[xUnit.net 00:00:02.64]       Expected response.StatusCode to be HttpStatusCode.OK {value: 200}, but found HttpStatusCode.Unauthorized {value: 401}.
+[xUnit.net 00:00:02.64]       Stack Trace:
+[xUnit.net 00:00:02.64]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:02.64]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:02.64]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:02.64]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:02.64]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:02.64]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:02.64]            at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
+[xUnit.net 00:00:02.64]         C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\IntegrationTests\Controllers\FacturaControllerTests.cs(27,0): at Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_Facturas_DebeRetornar200()
+[xUnit.net 00:00:02.64]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:02.65]   Finished:    Facturacion.Tests
+  Con error Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_Facturas_DebeRetornar200 [2 s]
+  Mensaje de error:
+   Expected response.StatusCode to be HttpStatusCode.OK {value: 200}, but found HttpStatusCode.Unauthorized {value: 401}.
+  Seguimiento de la pila:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
+   at Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_Facturas_DebeRetornar200() in C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\IntegrationTests\Controllers\FacturaControllerTests.cs:line 27
+--- End of stack trace from previous location ---
+
+No se pudo ejecutar la serie de pruebas.
+Pruebas totales: 1
+     Incorrecto: 1
+ Tiempo total: 3.2438 Segundos
+
+Hay actualizaciones de carga de trabajo disponibles. Ejecute "dotnet workload list" para obtener m├ís informaci├│n.

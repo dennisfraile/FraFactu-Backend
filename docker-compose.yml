@@ -1,0 +1,66 @@
+# FraFactu — entorno de desarrollo local (backend + frontend + PostgreSQL).
+#
+# Requiere que los DOS repos estén clonados como carpetas hermanas:
+#   .../FraFactu-Backend   (este repo, donde vive este compose)
+#   .../FraFactu-Frontend
+#
+# Arranque:  docker compose up --build
+#   - API:       http://localhost:8080  (Swagger en /swagger)
+#   - Frontend:  http://localhost:5173
+#   - Postgres:  localhost:5432
+#
+# Los valores por defecto son SOLO para desarrollo local. Para sobreescribir,
+# copia .env.example a .env (compose lo lee automáticamente).
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: frafactu-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-frafactu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-frafactu_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-frafactu}
+    ports:
+      - "5432:5432"
+    volumes:
+      - frafactu-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-frafactu} -d ${POSTGRES_DB:-frafactu}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+    container_name: frafactu-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB:-frafactu};Username=${POSTGRES_USER:-frafactu};Password=${POSTGRES_PASSWORD:-frafactu_dev}"
+      JwtSettings__SecretKey: ${JWT_SECRET_KEY:-dev-solo-cambiar-en-produccion-clave-larga-de-al-menos-32-bytes}
+      Encryption__MasterKey: ${ENCRYPTION_MASTER_KEY:-MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ../FraFactu-Frontend
+    container_name: frafactu-frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../FraFactu-Frontend:/app
+      - /app/node_modules
+
+volumes:
+  frafactu-db-data:

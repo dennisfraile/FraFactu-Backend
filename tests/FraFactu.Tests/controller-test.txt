@@ -1,0 +1,52 @@
+  Determinando los proyectos que se van a restaurar...
+  Todos los proyectos est├ín actualizados para la restauraci├│n.
+  Facturacion.Domain -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.Domain\bin\Debug\net8.0\Facturacion.Domain.dll
+  Facturacion.Application -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.Application\bin\Debug\net8.0\Facturacion.Application.dll
+  Facturacion.Infrastructure -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.Infrastructure\bin\Debug\net8.0\Facturacion.Infrastructure.dll
+  Facturacion.API -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.API\bin\Debug\net8.0\Facturacion.API.dll
+  Facturacion.Tests -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\bin\Debug\net8.0\Facturacion.Tests.dll
+Serie de pruebas para C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\bin\Debug\net8.0\Facturacion.Tests.dll (.NETCoreApp,Version=v8.0)
+Versi├│n 17.14.1 (x64) de VSTest
+
+Iniciando la ejecuci├│n de pruebas, espere...
+1 archivos de prueba en total coincidieron con el patr├│n especificado.
+[xUnit.net 00:00:02.50]     Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_Facturas_DebeRetornarListaVacia [FAIL]
+[xUnit.net 00:00:02.56]     Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_Facturas_DebeRetornar200 [FAIL]
+[xUnit.net 00:00:02.57]     Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_FacturaPorId_Inexistente_DebeRetornar404 [FAIL]
+  Con error Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_Facturas_DebeRetornarListaVacia [2 s]
+  Mensaje de error:
+   System.Net.Http.HttpRequestException : Response status code does not indicate success: 401 (Unauthorized).
+  Seguimiento de la pila:
+     at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+   at Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_Facturas_DebeRetornarListaVacia() in C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\IntegrationTests\Controllers\FacturaControllerTests.cs:line 52
+--- End of stack trace from previous location ---
+  Con error Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_Facturas_DebeRetornar200 [63 ms]
+  Mensaje de error:
+   Expected response.StatusCode to be HttpStatusCode.OK {value: 200}, but found HttpStatusCode.Unauthorized {value: 401}.
+  Seguimiento de la pila:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
+   at Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_Facturas_DebeRetornar200() in C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\IntegrationTests\Controllers\FacturaControllerTests.cs:line 32
+--- End of stack trace from previous location ---
+  Con error Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_FacturaPorId_Inexistente_DebeRetornar404 [6 ms]
+  Mensaje de error:
+   Expected response.StatusCode to be HttpStatusCode.NotFound {value: 404}, but found HttpStatusCode.Unauthorized {value: 401}.
+  Seguimiento de la pila:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
+   at Facturacion.Tests.IntegrationTests.Controllers.FacturaControllerTests.GET_FacturaPorId_Inexistente_DebeRetornar404() in C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\IntegrationTests\Controllers\FacturaControllerTests.cs:line 42
+--- End of stack trace from previous location ---
+
+Con error! - Con error:     3, Superado:     0, Omitido:     0, Total:     3, Duraci├│n: 2 s - Facturacion.Tests.dll (net8.0)
+
+Hay actualizaciones de carga de trabajo disponibles. Ejecute "dotnet workload list" para obtener m├ís informaci├│n.

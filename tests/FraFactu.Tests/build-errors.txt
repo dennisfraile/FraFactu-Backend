@@ -1,0 +1,17 @@
+  Determinando los proyectos que se van a restaurar...
+  Todos los proyectos est├ín actualizados para la restauraci├│n.
+  Facturacion.Domain -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.Domain\bin\Debug\net8.0\Facturacion.Domain.dll
+  Facturacion.Application -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.Application\bin\Debug\net8.0\Facturacion.Application.dll
+  Facturacion.Infrastructure -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.Infrastructure\bin\Debug\net8.0\Facturacion.Infrastructure.dll
+  Facturacion.API -> C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\src\Facturacion.API\bin\Debug\net8.0\Facturacion.API.dll
+C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\IntegrationTests\Services\FacturaServiceTests.cs(172,13): error CS0117: 'Receptor' no contiene una definici├│n para 'CatTipoDocumentoIdentificacionId' [C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\Facturacion.Tests.csproj]
+
+ERROR al compilar.
+
+C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\IntegrationTests\Services\FacturaServiceTests.cs(172,13): error CS0117: 'Receptor' no contiene una definici├│n para 'CatTipoDocumentoIdentificacionId' [C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\Facturacion.Tests.csproj]
+    0 Advertencia(s)
+    1 Errores
+
+Tiempo transcurrido 00:00:02.07
+
+Hay actualizaciones de carga de trabajo disponibles. Ejecute "dotnet workload list" para obtener m├ís informaci├│n.

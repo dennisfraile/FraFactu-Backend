@@ -1,0 +1,38 @@
+Serie de pruebas para C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\bin\Debug\net8.0\Facturacion.Tests.dll (.NETCoreApp,Version=v8.0)
+Versi├│n 17.14.1 (x64) de VSTest
+
+Iniciando la ejecuci├│n de pruebas, espere...
+1 archivos de prueba en total coincidieron con el patr├│n especificado.
+[xUnit.net 00:00:00.25]     Facturacion.Tests.Validators.CCF.MedicoDtoValidatorTests.Validate_SinNitNiDocIdentificacion_DeberiaGenerarError [FAIL]
+  Con error Facturacion.Tests.Validators.CCF.MedicoDtoValidatorTests.Validate_SinNitNiDocIdentificacion_DeberiaGenerarError [9 ms]
+  Mensaje de error:
+   FluentValidation.TestHelper.ValidationTestException : Expected a validation error for property 
+----
+Properties with Validation Errors:
+[0]: Identificaci├│n
+
+  Seguimiento de la pila:
+     at FluentValidation.TestHelper.TestValidationResult`1.ShouldHaveValidationError(String propertyName, Boolean shouldNormalizePropertyName) in /_/src/FluentValidation/TestHelper/TestValidationResult.cs:line 91
+   at FluentValidation.TestHelper.TestValidationResult`1.ShouldHaveValidationErrorFor[TProperty](Expression`1 memberAccessor) in /_/src/FluentValidation/TestHelper/TestValidationResult.cs:line 38
+   at Facturacion.Tests.Validators.CCF.MedicoDtoValidatorTests.Validate_SinNitNiDocIdentificacion_DeberiaGenerarError() in C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\Validators\CCF\MedicoDtoValidatorTests.cs:line 126
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.31]     Facturacion.Tests.Validators.AnularFacturaDtoValidatorTests.Validar_TipoDocumentoInvalidoId_DebeSerInvalido(tipoId: 99) [FAIL]
+  Con error Facturacion.Tests.Validators.AnularFacturaDtoValidatorTests.Validar_TipoDocumentoInvalidoId_DebeSerInvalido(tipoId: 99) [124 ms]
+  Mensaje de error:
+   Expected result.IsValid to be false, but found True.
+  Seguimiento de la pila:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Primitives.BooleanAssertions`1.BeFalse(String because, Object[] becauseArgs)
+   at Facturacion.Tests.Validators.AnularFacturaDtoValidatorTests.Validar_TipoDocumentoInvalidoId_DebeSerInvalido(Int32 tipoId) in C:\Users\LENOVO\Documents\Trabajo\Facturacion Electronica\Facturacion-Backend\tests\Facturacion.Tests\Validators\AnularFacturaDtoValidatorTests.cs:line 159
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+
+Con error! - Con error:     2, Superado:   174, Omitido:     0, Total:   176, Duraci├│n: 1 s - Facturacion.Tests.dll (net8.0)
+
+Hay actualizaciones de carga de trabajo disponibles. Ejecute "dotnet workload list" para obtener m├ís informaci├│n.
