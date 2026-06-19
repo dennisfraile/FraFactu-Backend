@@ -52,7 +52,6 @@ public class FacturaServiceDteV2Tests
             Mock.Of<ICrossDbCorrelativoService>(),
             Mock.Of<ICorrelativoInicialService>(),
             Mock.Of<ISaldoDteService>(),
-            Mock.Of<ISmartCareWebhookService>(),
             Mock.Of<ITelemetryService>());
 
     /// <summary>

@@ -37,23 +37,5 @@ namespace FraFactu.Application.Interfaces
         /// Busca productos por código o nombre
         /// </summary>
         Task<List<ProductoServicioListDto>> SearchAsync(string searchTerm, int emisorId, int? sucursalId = null);
-
-        /// <summary>
-        /// Sync server-to-server desde SmartInventory: busca por (EmisorId, Codigo)
-        /// y fija Activo al valor pedido. Idempotente: si el producto no existe en
-        /// Smartix devuelve Encontrado=false sin error; si ya estaba en el estado
-        /// pedido devuelve Cambio=false. Pensado para que el caller (SmartHub) pueda
-        /// decidir si loguea o no.
-        /// </summary>
-        Task<SyncProductoToggleResponseDto> SetActivoByCodigoAsync(int emisorId, string codigo, bool activo);
-
-        /// <summary>
-        /// Sync server-to-server desde SmartInventory: crea o actualiza un producto
-        /// por (EmisorId, Codigo). Si no existe lo crea con defaults razonables
-        /// (TipoImpuesto=Gravado, IVA=13%, AccesoTodasSucursales=true). Si existe
-        /// actualiza Nombre, Descripcion, PrecioVenta, PrecioCosto, CodigoBarras,
-        /// StockMinimo y Activo. Idempotente.
-        /// </summary>
-        Task<SyncProductoUpsertResponseDto> UpsertByCodigoAsync(SyncProductoUpsertRequestDto request);
     }
 }

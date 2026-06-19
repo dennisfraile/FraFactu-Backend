@@ -61,16 +61,5 @@ namespace FraFactu.Domain.Entities
 
         // CAJAS ASIGNADAS (many-to-many, aplica a usuarios con rol Cajero)
         public ICollection<UsuarioCaja> UsuarioCajas { get; set; } = new List<UsuarioCaja>();
-
-        // ============================================
-        // INTEGRACIÓN SMARTHUB (SSO)
-        // ============================================
-
-        /// <summary>
-        /// Id del usuario en SmartHub. Se setea en el primer login SSO via
-        /// /api/auth/hub-login para enlazar la cuenta local con la del Hub.
-        /// Null para usuarios creados antes del SSO o por flujos locales.
-        /// </summary>
-        public int? HubUsuarioId { get; set; }
     }
 }

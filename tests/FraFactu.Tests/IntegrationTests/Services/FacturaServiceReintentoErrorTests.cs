@@ -44,7 +44,6 @@ public class FacturaServiceReintentoErrorTests
             Mock.Of<ICrossDbCorrelativoService>(),
             Mock.Of<ICorrelativoInicialService>(),
             Mock.Of<ISaldoDteService>(),
-            Mock.Of<ISmartCareWebhookService>(),
             Mock.Of<ITelemetryService>());
 
     private static FacturaElectronica NuevaFactura(int id, string estado, int intentos,

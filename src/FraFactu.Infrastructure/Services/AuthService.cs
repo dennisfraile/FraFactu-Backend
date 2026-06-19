@@ -8,7 +8,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using FraFactu.Application.Common.Settings;
 using FraFactu.Application.DTOs.Auth;
-using FraFactu.Application.DTOs.Hub;
 using FraFactu.Application.Interfaces;
 using FraFactu.Infrastructure.Persistence;
 using Google.Apis.Auth;
@@ -23,7 +22,6 @@ namespace FraFactu.Infrastructure.Services
         private readonly JwtSettings _jwtSettings;
         private readonly GoogleAuthSettings _googleAuthSettings;
         private readonly IGoogleTokenValidator _googleTokenValidator;
-        private readonly ISmartHubApiService _smartHubApi;
         private readonly ILogger<AuthService> _logger;
 
         public AuthService(
@@ -31,14 +29,12 @@ namespace FraFactu.Infrastructure.Services
             IOptions<JwtSettings> jwtSettings,
             IOptions<GoogleAuthSettings> googleAuthSettings,
             IGoogleTokenValidator googleTokenValidator,
-            ISmartHubApiService smartHubApi,
             ILogger<AuthService> logger)
         {
             _context = context;
             _jwtSettings = jwtSettings.Value;
             _googleAuthSettings = googleAuthSettings.Value;
             _googleTokenValidator = googleTokenValidator;
-            _smartHubApi = smartHubApi;
             _logger = logger;
         }
 
@@ -71,14 +67,8 @@ namespace FraFactu.Infrastructure.Services
 
             var sucursalIds = usuario.UsuarioSucursales.Select(us => us.SucursalId).ToList();
 
-            // Bug #3 fix de raiz (2026-05-29): lookup en SmartHub por email para
-            // que el JWT lleve usuario_hub_id + token_version + emisores_accesibles
-            // aunque el login NO sea SSO. Sin esto, el wizard cross-Emisor (Plan-C2)
-            // bloquea por claim vacio. Best-effort: si Hub no responde, sale sin
-            // claims Hub (back-compat).
-            var hubClaims = await _smartHubApi.LookupHubUserByEmailAsync(usuario.Email);
-
-            // Generar token
+            // Generar token (identidad 100% local; emisores_accesibles se calcula
+            // localmente a partir del EmisorId en GenerateJwtToken).
             var token = GenerateJwtToken(
                 usuario.Id,
                 usuario.Email,
@@ -88,10 +78,7 @@ namespace FraFactu.Infrastructure.Services
                 usuario.RolId,
                 usuario.Rol.Nombre,
                 usuario.AccesoTodasSucursales,
-                sucursalIds,
-                hubUsuarioId: hubClaims?.HubUsuarioId,
-                tokenVersion: hubClaims?.TokenVersion,
-                emisoresAccesibles: hubClaims?.EmisoresAccesibles
+                sucursalIds
             );
 
             // Construir respuesta
@@ -323,10 +310,7 @@ namespace FraFactu.Infrastructure.Services
 
             var sucursalIds = usuario.UsuarioSucursales.Select(us => us.SucursalId).ToList();
 
-            // Bug #3 fix de raiz (2026-05-29): mismo lookup que LoginAsync.
-            var hubClaims = await _smartHubApi.LookupHubUserByEmailAsync(usuario.Email);
-
-            // 4. Generar JWT token
+            // 4. Generar JWT token (identidad 100% local).
             var token = GenerateJwtToken(
                 usuario.Id,
                 usuario.Email,
@@ -336,10 +320,7 @@ namespace FraFactu.Infrastructure.Services
                 usuario.RolId,
                 usuario.Rol.Nombre,
                 usuario.AccesoTodasSucursales,
-                sucursalIds,
-                hubUsuarioId: hubClaims?.HubUsuarioId,
-                tokenVersion: hubClaims?.TokenVersion,
-                emisoresAccesibles: hubClaims?.EmisoresAccesibles
+                sucursalIds
             );
 
             // 5. Construir respuesta
@@ -403,155 +384,6 @@ namespace FraFactu.Infrastructure.Services
             return true;
         }
 
-        // ============================================
-        // SSO HUB → SMARTIX
-        // ============================================
-
-        public async Task<LoginResponseDto> HubLoginAsync(HubLoginRequestDto request)
-        {
-            if (string.IsNullOrWhiteSpace(request.Code))
-                throw new UnauthorizedAccessException("Code requerido.");
-
-            var hubUser = await _smartHubApi.ValidateExchangeCodeAsync(request.Code);
-            if (hubUser == null)
-            {
-                _logger.LogWarning("[HubLogin] SmartHub rechazo el code");
-                throw new UnauthorizedAccessException("Code de SmartHub invalido o expirado.");
-            }
-
-            if (hubUser.OrganizacionId == null)
-            {
-                _logger.LogWarning("[HubLogin] HubUsuarioId={Id} sin Hub activo", hubUser.HubUsuarioId);
-                throw new InvalidOperationException("El usuario no tiene un Hub activo en SmartHub.");
-            }
-
-            // F6: Hub = Emisor 1:1. Lookup explicito por Emisor.HubId.
-            var emisor = await _context.Emisores
-                .FirstOrDefaultAsync(e => e.HubId == hubUser.OrganizacionId);
-
-            if (emisor == null)
-            {
-                _logger.LogWarning("[HubLogin] HubId={HubId} sin Emisor vinculado en Smartix", hubUser.OrganizacionId);
-                throw new InvalidOperationException(
-                    $"El Hub {hubUser.OrganizacionId} no esta vinculado a ningun Emisor en Smartix.");
-            }
-
-            // Buscar usuario por HubUsuarioId; fallback Email para enlazar cuentas pre-SSO.
-            var usuario = await _context.Usuarios
-                .Include(u => u.Rol)
-                .Include(u => u.UsuarioSucursales)
-                .FirstOrDefaultAsync(u => u.HubUsuarioId == hubUser.HubUsuarioId);
-
-            if (usuario == null)
-            {
-                // Fallback por Email case-insensitive (Postgres compara strings
-                // case-sensitive por defecto; ToLower -> LOWER() en SQL). Evita no
-                // enlazar la cuenta pre-SSO por diferencia de mayusculas en el email.
-                var emailNorm = hubUser.Email.ToLower();
-                usuario = await _context.Usuarios
-                    .Include(u => u.Rol)
-                    .Include(u => u.UsuarioSucursales)
-                    .FirstOrDefaultAsync(u => u.Email.ToLower() == emailNorm);
-
-                if (usuario != null)
-                    usuario.HubUsuarioId = hubUser.HubUsuarioId;
-            }
-
-            if (usuario == null)
-            {
-                // Crear usuario nuevo via SSO.
-                var rolNombre = MapHubRolToSmartixRol(hubUser.Rol);
-                var rol = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == rolNombre)
-                          ?? await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == "EmisorAdmin")
-                          ?? throw new InvalidOperationException("Rol default 'EmisorAdmin' no existe en BD.");
-
-                usuario = new Usuario
-                {
-                    Email = hubUser.Email,
-                    NombreCompleto = string.IsNullOrWhiteSpace(hubUser.NombreCompleto) ? hubUser.Email : hubUser.NombreCompleto,
-                    HubUsuarioId = hubUser.HubUsuarioId,
-                    EmisorId = emisor.Id,
-                    RolId = rol.Id,
-                    Rol = rol,
-                    Estado = EstadoUsuario.Activo,
-                    ProveedorAuth = ProveedorAutenticacion.SmartHub,
-                    AccesoTodasSucursales = hubUser.Rol == "SuperAdmin" || hubUser.Rol == "AdminOrg",
-                };
-
-                if (!usuario.AccesoTodasSucursales)
-                {
-                    foreach (var sucId in hubUser.SucursalIds)
-                        usuario.UsuarioSucursales.Add(new UsuarioSucursal { SucursalId = sucId });
-                }
-
-                _context.Usuarios.Add(usuario);
-                _logger.LogInformation("[HubLogin] Usuario nuevo creado via SSO: Email={Email} HubUsuarioId={HId} EmisorId={EId} Rol={Rol}",
-                    usuario.Email, hubUser.HubUsuarioId, emisor.Id, rol.Nombre);
-            }
-            else
-            {
-                // Usuario existente: sync EmisorId si cambio (multi-Hub) y registrar acceso.
-                if (usuario.EmisorId != emisor.Id)
-                {
-                    _logger.LogInformation("[HubLogin] Sync EmisorId Usuario={Id} de {Old} a {New}",
-                        usuario.Id, usuario.EmisorId, emisor.Id);
-                    usuario.EmisorId = emisor.Id;
-                }
-                usuario.UltimoAcceso = DateTime.UtcNow;
-            }
-
-            if (usuario.Estado != EstadoUsuario.Activo)
-            {
-                _logger.LogWarning("[HubLogin] Usuario {Id} inactivo en Smartix", usuario.Id);
-                throw new UnauthorizedAccessException("Usuario deshabilitado en Smartix.");
-            }
-
-            // Plan B Hub-as-Emisor — Fase 2 Task 16 (Bloque D).
-            // Refrescamos el cache del Emisor desde SmartHub justo antes de emitir
-            // el JWT: si un admin acaba de editar datos fiscales en SmartHub y el
-            // webhook B.3 todavia no llego, el SSO lo trae al instante. Best-effort:
-            // si el GET falla, el login continua con el cache local (capa b de defensa).
-            await RefrescarEmisorFiscalDesdeHubAsync(emisor);
-
-            await _context.SaveChangesAsync();
-
-            // Recargar Rol si recien se creo (ya esta seteado en memoria) o por seguridad.
-            if (usuario.Rol == null)
-                await _context.Entry(usuario).Reference(u => u.Rol).LoadAsync();
-
-            var sucursalIds = usuario.UsuarioSucursales.Select(us => us.SucursalId).ToList();
-
-            var rolNombreFinal = usuario.Rol!.Nombre;
-
-            var token = GenerateJwtToken(
-                usuario.Id,
-                usuario.Email,
-                usuario.NombreCompleto,
-                emisor.Id,
-                emisor.NombreRazonSocial,
-                usuario.RolId,
-                rolNombreFinal,
-                usuario.AccesoTodasSucursales,
-                sucursalIds,
-                hubUser.HubUsuarioId,
-                hubUser.TokenVersion,
-                hubUser.EmisoresAccesibles);
-
-            return new LoginResponseDto
-            {
-                Token = token,
-                UserId = usuario.Id,
-                Email = usuario.Email,
-                NombreCompleto = usuario.NombreCompleto,
-                EmisorId = emisor.Id,
-                EmisorNombre = emisor.NombreRazonSocial,
-                AccesoTodasSucursales = usuario.AccesoTodasSucursales,
-                SucursalIds = sucursalIds,
-                RolId = usuario.RolId,
-                RolNombre = rolNombreFinal,
-                RequiereCambioPwd = false
-            };
-        }
 
         /// <summary>
         /// UsuarioCompartido + Plan B Hub-as-Emisor — Task B.2.
@@ -639,190 +471,6 @@ namespace FraFactu.Infrastructure.Services
             });
         }
 
-        /// <summary>
-        /// Bug #3 (UsuarioCompartido / Plan B Hub-as-Emisor) — 2026-05-29.
-        /// Refresh durable de la lista <c>emisores_accesibles</c> sin re-SSO.
-        /// Pull a SmartHub via internal endpoint (server-to-server con X-Api-Key),
-        /// reemision del JWT con la lista nueva preservando todo el resto de la
-        /// sesion (hub_usuario_id, token_version, Emisor activo, sucursales).
-        ///
-        /// Cubre el caso reportado el 2026-05-29: a un SuperAdmin del Hub se le
-        /// asigna un Hub nuevo (UsuariosHubs.Insert) y al abrir el wizard de
-        /// Smartix el claim sigue stale, mostrando "No tenes acceso al Emisor".
-        /// Tambien autosana cualquier futuro bug del SSO que deje la lista corta.
-        ///
-        /// Fail-open por diseno: si el Hub no responde, retornamos null y la
-        /// sesion sigue funcionando con el claim viejo del JWT (el caller
-        /// muestra el mismo error que antes — no rompemos nada).
-        /// </summary>
-        public async Task<LoginResponseDto?> RefreshEmisoresAsync(
-            int usuarioId,
-            int? hubUsuarioId,
-            int? tokenVersion)
-        {
-            var usuario = await _context.Usuarios
-                .Include(u => u.Rol)
-                .Include(u => u.Emisor)
-                .Include(u => u.UsuarioSucursales)
-                .FirstOrDefaultAsync(u => u.Id == usuarioId);
-
-            if (usuario == null)
-                return null;
-
-            if (usuario.Estado != EstadoUsuario.Activo)
-            {
-                _logger.LogWarning("[RefreshEmisores] Usuario {Id} inactivo en Smartix; refresh denegado.", usuarioId);
-                return null;
-            }
-
-            List<int> lista;
-            if (hubUsuarioId.HasValue)
-            {
-                // JWT SSO (HubLoginAsync emitio los claims): pull por hubUsuarioId.
-                var listaSso = await _smartHubApi.GetEmisoresAccesiblesAsync(hubUsuarioId.Value);
-                if (listaSso == null)
-                {
-                    _logger.LogWarning(
-                        "[RefreshEmisores] SmartHub no respondio para hubUsuarioId={Id}; claim queda intacto.",
-                        hubUsuarioId.Value);
-                    return null;
-                }
-                lista = listaSso;
-            }
-            else
-            {
-                // Bug #3 fix de raiz (2026-05-29): JWT no-SSO (login local / Google
-                // directo / Supabase Sync) no tiene usuario_hub_id. Fallback por
-                // email — reconstruimos los 3 claims Hub desde el lookup.
-                var lookup = await _smartHubApi.LookupHubUserByEmailAsync(usuario.Email);
-                if (lookup == null)
-                {
-                    _logger.LogWarning(
-                        "[RefreshEmisores] lookup-by-email fallo para {Email}; claim queda intacto.",
-                        usuario.Email);
-                    return null;
-                }
-                hubUsuarioId = lookup.HubUsuarioId;
-                tokenVersion = lookup.TokenVersion;
-                lista = lookup.EmisoresAccesibles;
-                _logger.LogInformation(
-                    "[RefreshEmisores] JWT no-SSO ({Email}): hidratamos via lookup-by-email a hubUsuarioId={HubId}.",
-                    usuario.Email, hubUsuarioId.Value);
-            }
-
-            var sucursalIds = usuario.UsuarioSucursales.Select(us => us.SucursalId).ToList();
-            var rolNombre = usuario.Rol?.Nombre ?? string.Empty;
-
-            var token = GenerateJwtToken(
-                usuario.Id,
-                usuario.Email,
-                usuario.NombreCompleto,
-                usuario.EmisorId,
-                usuario.Emisor?.NombreRazonSocial,
-                usuario.RolId,
-                rolNombre,
-                usuario.AccesoTodasSucursales,
-                sucursalIds,
-                hubUsuarioId: hubUsuarioId,
-                tokenVersion: tokenVersion,
-                emisoresAccesibles: lista);
-
-            _logger.LogInformation(
-                "[RefreshEmisores] Usuario {UsuarioId} (hubId={HubId}) lista refrescada a {Lista}",
-                usuario.Id, hubUsuarioId.Value, string.Join(",", lista));
-
-            return new LoginResponseDto
-            {
-                Token = token,
-                UserId = usuario.Id,
-                Email = usuario.Email,
-                NombreCompleto = usuario.NombreCompleto,
-                EmisorId = usuario.EmisorId,
-                EmisorNombre = usuario.Emisor?.NombreRazonSocial,
-                AccesoTodasSucursales = usuario.AccesoTodasSucursales,
-                SucursalIds = sucursalIds,
-                RolId = usuario.RolId,
-                RolNombre = rolNombre,
-                RequiereCambioPwd = false
-            };
-        }
-
-        private static string MapHubRolToSmartixRol(string hubRol) => hubRol switch
-        {
-            "SuperAdmin" => "SuperAdmin",
-            "AdminOrg" => "EmisorAdmin",
-            _ => "EmisorAdmin"
-        };
-
-        /// <summary>
-        /// Plan B Hub-as-Emisor — Fase 2 Task 16 (Bloque D).
-        /// Pull fresco de los datos fiscales del Hub para refrescar el cache local
-        /// del Emisor antes de emitir el JWT. Best-effort end-to-end: cualquier
-        /// fallo (SmartHub apagado, payload incompleto, catalogo MH faltante) se
-        /// loguea como warning y deja el Emisor con los valores que ya tenia.
-        /// Nunca lanza al caller — el SSO debe completarse incluso si SmartHub no
-        /// esta accesible.
-        /// </summary>
-        private async Task RefrescarEmisorFiscalDesdeHubAsync(Emisor emisor)
-        {
-            if (emisor.HubId is null) return;
-
-            try
-            {
-                var payload = await _smartHubApi.GetFiscalPayloadForHubAsync(emisor.HubId.Value);
-                if (payload?.Emisor is null) return;
-
-                var fiscal = payload.Emisor;
-
-                var catDepId = await _context.CatDepartamentos
-                    .Where(d => d.Codigo == fiscal.CodDepartamento)
-                    .Select(d => (int?)d.Id)
-                    .FirstOrDefaultAsync();
-                var catMunId = await _context.CatMunicipios
-                    .Where(m => m.CodigoDepartamento == fiscal.CodDepartamento && m.Codigo == fiscal.CodMunicipio)
-                    .Select(m => (int?)m.Id)
-                    .FirstOrDefaultAsync();
-                var catTipoId = await _context.CatTiposEstablecimiento
-                    .Where(t => t.Codigo == fiscal.CodTipoEstablecimiento)
-                    .Select(t => (int?)t.Id)
-                    .FirstOrDefaultAsync();
-
-                if (catDepId is null || catMunId is null || catTipoId is null)
-                {
-                    _logger.LogWarning(
-                        "[HubLogin] Catalogo MH faltante al refrescar Emisor {EmisorId}: depto={Dep} muni={Mun} tipo={Tipo}; refresh omitido.",
-                        emisor.Id, fiscal.CodDepartamento, fiscal.CodMunicipio, fiscal.CodTipoEstablecimiento);
-                    return;
-                }
-
-                // Solo campos identitarios. NO tocar Mh*, Smtp*, Gmail*, LogoUrl,
-                // CatAmbienteDestinoId — esos son secretos/config Smartix-only.
-                emisor.Nit = fiscal.Nit;
-                emisor.Nrc = fiscal.Nrc;
-                emisor.NombreRazonSocial = fiscal.NombreRazonSocial;
-                emisor.NombreComercial = fiscal.NombreComercial;
-                emisor.CodigoActividad = fiscal.CodActividadEconomica;
-                emisor.DescripcionActividad = fiscal.DescActividadEconomica;
-                emisor.CatDepartamentoId = catDepId.Value;
-                emisor.CatMunicipioId = catMunId.Value;
-                emisor.CatTipoEstablecimientoId = catTipoId.Value;
-                emisor.Direccion = fiscal.DireccionComplemento;
-                if (!string.IsNullOrWhiteSpace(fiscal.TelefonoFiscal))
-                    emisor.Telefono = fiscal.TelefonoFiscal;
-                if (!string.IsNullOrWhiteSpace(fiscal.CorreoFiscal))
-                    emisor.CorreoElectronico = fiscal.CorreoFiscal;
-
-                _logger.LogInformation(
-                    "[HubLogin] Emisor {EmisorId} (HubId={HubId}) refrescado desde SmartHub via SSO.",
-                    emisor.Id, emisor.HubId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex,
-                    "[HubLogin] Refresh fiscal del Emisor {EmisorId} fallo; login continua con cache local.",
-                    emisor.Id);
-            }
-        }
 
     }
 }

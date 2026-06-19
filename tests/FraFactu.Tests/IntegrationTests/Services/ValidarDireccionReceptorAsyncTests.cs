@@ -29,7 +29,7 @@ public class ValidarDireccionReceptorAsyncTests
             Mock.Of<IHttpContextAccessor>(), NullLogger<FacturaService>.Instance,
             Mock.Of<IEmailService>(), Mock.Of<ICrossDbCorrelativoService>(),
             Mock.Of<ICorrelativoInicialService>(),
-            Mock.Of<ISaldoDteService>(), Mock.Of<ISmartCareWebhookService>(),
+            Mock.Of<ISaldoDteService>(),
             Mock.Of<ITelemetryService>());
 
     private static void SeedReceptor(ApplicationDbContext ctx, int id, int? depId, int? muniId, int? disId, string? direccion)

@@ -19,7 +19,6 @@ namespace FraFactu.Tests.UnitTests.Services
         private readonly Mock<IOptions<JwtSettings>> _mockJwtSettings;
         private readonly Mock<IOptions<GoogleAuthSettings>> _mockGoogleAuthSettings;
         private readonly Mock<IGoogleTokenValidator> _mockTokenValidator;
-        private readonly Mock<ISmartHubApiService> _mockSmartHubApi;
         private readonly ApplicationDbContext _context;
         private readonly AuthService _authService;
 
@@ -49,7 +48,6 @@ namespace FraFactu.Tests.UnitTests.Services
             });
 
             _mockTokenValidator = new Mock<IGoogleTokenValidator>();
-            _mockSmartHubApi = new Mock<ISmartHubApiService>();
 
             // Initialize Service
             _authService = new AuthService(
@@ -57,7 +55,6 @@ namespace FraFactu.Tests.UnitTests.Services
                 _mockJwtSettings.Object,
                 _mockGoogleAuthSettings.Object,
                 _mockTokenValidator.Object,
-                _mockSmartHubApi.Object,
                 NullLogger<AuthService>.Instance
             );
         }

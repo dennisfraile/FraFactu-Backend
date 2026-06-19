@@ -201,27 +201,5 @@ namespace FraFactu.Domain.Entities
         /// </summary>
         public DateTime? UltimaLecturaCorreo { get; set; }
 
-        // ============================================
-        // INTEGRACIÓN SMARTHUB
-        // ============================================
-
-        /// <summary>
-        /// ID del Hub en SmartHub que corresponde a este Emisor (1:1).
-        /// Null si el emisor no está vinculado a SmartHub.
-        /// </summary>
-        public int? HubId { get; set; }
-
-        // Nota: el campo Activo (bool) lo provee BaseEntity. SmartHub lo controla
-        // via /api/sync/emisor/toggle-active cuando se (des)activa el Hub 1:1.
-
-        /// <summary>
-        /// F3 (Plan inventario desde DTE): indica si el Hub asociado tiene la
-        /// app SmartInventory activa. Lo controla SmartHub via webhook
-        /// (<c>PUT /api/internal/emisores/{hubId}/inventory-app-toggle</c>)
-        /// cuando se (des)activa la suscripcion correspondiente. Cuando es
-        /// true, al confirmar una compra externa Smartix encola un evento al
-        /// outbox para replicar el movimiento en SmartInventory.
-        /// </summary>
-        public bool TieneSmartInventoryActiva { get; set; }
     }
 }

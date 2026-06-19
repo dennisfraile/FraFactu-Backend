@@ -19,18 +19,15 @@ namespace FraFactu.API.Controllers
     {
         private readonly IFacturaService _facturaService;
         private readonly IValidator<CreateFacturaElectronicaDto> _validator;
-        private readonly IFromSmartCarePrefillService _prefillService;
         private readonly ILogger<FacturasController> _logger;
 
         public FacturasController(
             IFacturaService facturaService,
             IValidator<CreateFacturaElectronicaDto> validator,
-            IFromSmartCarePrefillService prefillService,
             ILogger<FacturasController> logger)
         {
             _facturaService = facturaService;
             _validator = validator;
-            _prefillService = prefillService;
             _logger = logger;
         }
 
@@ -73,39 +70,14 @@ namespace FraFactu.API.Controllers
                 return StatusCode(403, new { error = "No tiene permiso para crear facturas en esta sucursal" });
             }
 
-            // 2. Resolver EmisorId.
-            // Caso prefill SmartCare: si la emision nacio de un prefill (header
-            // X-SmartCare-Prefill-Id), el EmisorId del JWT puede no coincidir con
-            // el de la visita — caso tipico es un user multi-Hub cuyo JWT trae el
-            // Emisor de su Hub activo, pero la visita pertenece a una clinica de
-            // otro Hub. La factura DEBE emitirse con el Emisor de la clinica de
-            // la visita (que el prefill ya resolvio correctamente en CrearAsync).
-            // Si no hay prefill o no se puede resolver, caemos al EmisorId del JWT.
-            var emisorIdFromPrefill = await TryResolverEmisorDesdePrefillAsync();
-            var emisorId = emisorIdFromPrefill ?? int.Parse(User.FindFirst("EmisorId")?.Value
+            // 2. Resolver EmisorId desde el JWT.
+            var emisorId = int.Parse(User.FindFirst("EmisorId")?.Value
                 ?? throw new UnauthorizedAccessException("EmisorId no encontrado en el token"));
-
-            // Seguridad: si el Emisor sale de un prefill, validar que el user del JWT
-            // tenga acceso a ese Emisor (rol UsuarioCompartido del Grupo). Sin este
-            // check, un user con prefillId valido podria emitir facturas a nombre
-            // de cualquier Emisor que aparezca en un prefill existente.
-            if (emisorIdFromPrefill.HasValue)
-            {
-                var emisoresAccesibles = ScopeHelper.GetEmisoresAccesibles(User);
-                if (!emisoresAccesibles.Contains(emisorIdFromPrefill.Value))
-                    return StatusCode(403, new { error = $"No tiene acceso al Emisor {emisorIdFromPrefill.Value} del prefill." });
-            }
 
             try
             {
                 // 3. Crear factura
                 var factura = await _facturaService.CreateAsync(dto, emisorId);
-
-                // 3.b — Si la emisión nació de un Prefill SmartCare (header
-                // X-SmartCare-Prefill-Id), consumirlo para adjuntar metadatos
-                // (correlationId, webhookUrl, clinicId, visitId) a la factura.
-                // Fallar acá no debe romper la emisión: solo loguear.
-                await TryConsumirPrefillAsync(factura.Id);
 
                 // 4. Retornar 201 Created con Location header
                 return CreatedAtAction(
@@ -117,79 +89,7 @@ namespace FraFactu.API.Controllers
             catch (InvalidOperationException ex)
             {
                 var facturaId = ex.Data.Contains("FacturaId") ? (int?)ex.Data["FacturaId"] : null;
-
-                // Bug SmartCare (2026-05-29): si la factura SE creó pero el envío a
-                // Hacienda falló (ej. "Error al desencriptar MhClaveApi" por MasterKey
-                // rotada), igual hay que consumir el prefill para copiar el
-                // SmartCareCorrelationId a la factura. Sin esto la factura queda
-                // huérfana de SmartCare: el polling by-correlation no la encuentra y la
-                // visita se queda "Procesando" para siempre, aunque luego el usuario la
-                // guarde como pendiente desde el modal de rechazo.
-                if (facturaId.HasValue)
-                    await TryConsumirPrefillAsync(facturaId.Value);
-
                 return BadRequest(new { error = ex.Message, facturaId });
-            }
-        }
-
-        /// <summary>
-        /// Si la request trae <c>X-SmartCare-Prefill-Id</c>, carga el prefill y
-        /// devuelve su <c>EmisorId</c>. Esto fuerza a que la factura se emita con
-        /// el Emisor de la clinica de origen, no con el del JWT del user (que
-        /// puede ser de otro Hub si es multi-Hub). Si el prefill no existe / esta
-        /// consumido / expirado, devuelve null y el caller hace fallback al JWT.
-        /// </summary>
-        private async Task<int?> TryResolverEmisorDesdePrefillAsync()
-        {
-            if (!Request.Headers.TryGetValue("X-SmartCare-Prefill-Id", out var prefillIdHeader))
-                return null;
-
-            if (!int.TryParse(prefillIdHeader.FirstOrDefault(), out var prefillId) || prefillId <= 0)
-                return null;
-
-            try
-            {
-                var prefill = await _prefillService.ObtenerAsync(prefillId);
-                if (prefill is null || prefill.Consumed)
-                    return null;
-                return prefill.EmisorId;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex,
-                    "Fallo al resolver Emisor desde prefill {PrefillId}; cayendo a JWT.",
-                    prefillId);
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Si la request trae <c>X-SmartCare-Prefill-Id</c>, llama al servicio de
-        /// prefills para copiar metadatos SmartCare al row de factura recién
-        /// creado. Cualquier error es no-fatal — solo se loguea.
-        /// </summary>
-        private async Task TryConsumirPrefillAsync(int facturaId)
-        {
-            if (!Request.Headers.TryGetValue("X-SmartCare-Prefill-Id", out var prefillIdHeader))
-                return;
-
-            if (!int.TryParse(prefillIdHeader.FirstOrDefault(), out var prefillId) || prefillId <= 0)
-            {
-                _logger.LogWarning(
-                    "Header X-SmartCare-Prefill-Id no es un entero válido: {Value}",
-                    prefillIdHeader.ToString());
-                return;
-            }
-
-            try
-            {
-                await _prefillService.ConsumirAsync(prefillId, facturaId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex,
-                    "Fallo al consumir prefill {PrefillId} para factura {FacturaId}",
-                    prefillId, facturaId);
             }
         }
 
@@ -735,13 +635,6 @@ namespace FraFactu.API.Controllers
             try
             {
                 var factura = await _facturaService.GuardarComoPendienteAsync(emisorId, dto);
-
-                // Si el wizard vino con prefill (header X-SmartCare-Prefill-Id),
-                // consumirlo aca para que copie metadatos al row de factura y
-                // dispare el webhook a SmartCare. Sin esto, los campos
-                // SmartCareCorrelationId/WebhookUrl quedan NULL y SmartCare no
-                // se entera de que la factura existe hasta el envio diferido.
-                await TryConsumirPrefillAsync(factura.Id);
 
                 return CreatedAtAction(
                     nameof(GetByCodigoGeneracion),

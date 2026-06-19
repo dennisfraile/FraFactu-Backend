@@ -40,8 +40,7 @@ public class EventoDteV2Tests
             ctx,
             Mock.Of<IHaciendaApiService>(),
             Mock.Of<IServiceProvider>(),
-            NullLogger<EventoContingenciaService>.Instance,
-            Mock.Of<ISmartCareWebhookService>());
+            NullLogger<EventoContingenciaService>.Instance);
 
     // ==========================================
     // CONTINGENCIA v4

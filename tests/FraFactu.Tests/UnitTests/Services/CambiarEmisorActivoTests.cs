@@ -49,14 +49,12 @@ namespace FraFactu.Tests.UnitTests.Services
             });
 
             var googleValidator = new Mock<IGoogleTokenValidator>();
-            var hubApi = new Mock<ISmartHubApiService>();
 
             _authService = new AuthService(
                 _context,
                 jwtSettings.Object,
                 googleAuthSettings.Object,
                 googleValidator.Object,
-                hubApi.Object,
                 NullLogger<AuthService>.Instance
             );
 
@@ -71,7 +69,6 @@ namespace FraFactu.Tests.UnitTests.Services
                 new Emisor
                 {
                     Id = 10,
-                    HubId = 100,
                     NombreRazonSocial = "Empresa Uno",
                     Nit = "06140506141011",
                     Nrc = "111111-1",
@@ -85,7 +82,6 @@ namespace FraFactu.Tests.UnitTests.Services
                 new Emisor
                 {
                     Id = 20,
-                    HubId = 200,
                     NombreRazonSocial = "Empresa Dos",
                     Nit = "06140506141022",
                     Nrc = "222222-2",
@@ -99,7 +95,6 @@ namespace FraFactu.Tests.UnitTests.Services
                 new Emisor
                 {
                     Id = 30,
-                    HubId = 300,
                     NombreRazonSocial = "Empresa Tres",
                     Nit = "06140506141033",
                     Nrc = "333333-3",
@@ -117,7 +112,6 @@ namespace FraFactu.Tests.UnitTests.Services
                 Id = 50,
                 Email = "compartido@empresa.com",
                 NombreCompleto = "Usuario Compartido",
-                HubUsuarioId = 999,
                 EmisorId = 10,
                 RolId = 2,
                 Estado = EstadoUsuario.Activo,

@@ -67,13 +67,12 @@ namespace FraFactu.Tests.IntegrationTests.Services
             var inventarioServiceMock = new Mock<Application.Services.IInventarioIntegrationService>();
             var emailServiceMock = new Mock<Application.Interfaces.IEmailService>();
             var encryptionServiceMock = new Mock<Application.Interfaces.IEncryptionService>();
-            var smartCareWebhookMock = new Mock<Application.Interfaces.ISmartCareWebhookService>();
 
             currentUserServiceMock.Setup(x => x.GetUsuarioNombre()).Returns("Test User");
             encryptionServiceMock.Setup(x => x.Decrypt(It.IsAny<string>())).Returns<string>(s => s);
             encryptionServiceMock.Setup(x => x.Encrypt(It.IsAny<string>())).Returns<string>(s => s);
 
-            return new LoteService(context, logger, httpClientFactory, currentUserServiceMock.Object, haciendaServiceMock.Object, facturaServiceMock.Object, signerServiceMock.Object, authServiceMock.Object, inventarioServiceMock.Object, emailServiceMock.Object, encryptionServiceMock.Object, smartCareWebhookMock.Object);
+            return new LoteService(context, logger, httpClientFactory, currentUserServiceMock.Object, haciendaServiceMock.Object, facturaServiceMock.Object, signerServiceMock.Object, authServiceMock.Object, inventarioServiceMock.Object, emailServiceMock.Object, encryptionServiceMock.Object);
         }
 
         [Fact]

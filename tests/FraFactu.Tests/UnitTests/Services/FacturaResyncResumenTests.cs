@@ -40,7 +40,6 @@ public class FacturaResyncResumenTests
             Mock.Of<ICrossDbCorrelativoService>(),
             Mock.Of<ICorrelativoInicialService>(),
             Mock.Of<ISaldoDteService>(),
-            Mock.Of<ISmartCareWebhookService>(),
             Mock.Of<ITelemetryService>());
     }
 

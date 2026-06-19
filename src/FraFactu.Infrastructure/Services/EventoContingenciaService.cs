@@ -24,20 +24,17 @@ public class EventoContingenciaService : IEventoContingenciaService
     private readonly IHaciendaApiService _haciendaApiService;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<EventoContingenciaService> _logger;
-    private readonly ISmartCareWebhookService _smartCareWebhook;
 
     public EventoContingenciaService(
         ApplicationDbContext context,
         IHaciendaApiService haciendaApiService,
         IServiceProvider serviceProvider,
-        ILogger<EventoContingenciaService> logger,
-        ISmartCareWebhookService smartCareWebhook)
+        ILogger<EventoContingenciaService> logger)
     {
         _context = context;
         _haciendaApiService = haciendaApiService;
         _serviceProvider = serviceProvider;
         _logger = logger;
-        _smartCareWebhook = smartCareWebhook;
     }
 
     public async Task<EventoContingenciaDto> CrearEventoAsync(CrearEventoContingenciaDto dto, int emisorId)
@@ -169,24 +166,6 @@ public class EventoContingenciaService : IEventoContingenciaService
         }
         await _context.SaveChangesAsync();
 
-        // 7.2 Las facturas ya estaban en PENDIENTE_LOTE pero recién ahora quedan
-        // asociadas a un EventoContingenciaId. Avisamos a SmartCare para que el
-        // botón "Ver en Smartix" reapunte de /facturas-pendientes a /contingencia
-        // — sin esperar a que el lote se procese (que puede tomar minutos u horas
-        // si MH responde RECIBIDO y el envío real lo hace un background job).
-        foreach (var factura in facturas.Where(f => !string.IsNullOrEmpty(f.SmartCareCorrelationId)))
-        {
-            try
-            {
-                await _smartCareWebhook.NotificarCambioEstadoAsync(factura);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex,
-                    "[SmartCare-Webhook] Falla al notificar asociación a evento {EventoId} de factura {FacturaId}.",
-                    evento.Id, factura.Id);
-            }
-        }
 
         // 8. TRANSMITIR A HACIENDA AUTOMÁTICAMENTE
         try
@@ -276,23 +255,6 @@ public class EventoContingenciaService : IEventoContingenciaService
 
                 await _context.SaveChangesAsync();
 
-                // Notificar a SmartCare: al desasociar del evento, el ViewUrl de
-                // cada factura vuelve a /facturas-pendientes (PENDIENTE_LOTE sin
-                // evento). Si no avisamos, SmartCare seguiría enviando al usuario
-                // a /contingencia, donde la factura ya no aparece.
-                foreach (var factura in facturasDelEvento.Where(f => !string.IsNullOrEmpty(f.SmartCareCorrelationId)))
-                {
-                    try
-                    {
-                        await _smartCareWebhook.NotificarCambioEstadoAsync(factura);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex,
-                            "[SmartCare-Webhook] Falla al notificar liberación de factura {FacturaId} del evento {EventoId}.",
-                            factura.Id, evento.Id);
-                    }
-                }
             }
         }
         catch (Exception ex)
@@ -686,23 +648,6 @@ public class EventoContingenciaService : IEventoContingenciaService
             "[CONTINGENCIA-MANUAL] Factura {FacturaId} marcada como diferida. Evento: {EventoId}, Tipo: {Tipo}",
             request.FacturaId, eventoId, request.TipoContingencia);
 
-        // Si la factura proviene de un prefill SmartCare, avisar del cambio
-        // a PENDIENTE_LOTE-con-EventoContingenciaId para que el botón "Ver en
-        // Smartix" de SmartCare apunte a /contingencia (tab Diferidos) en vez
-        // de seguir apuntando a /facturas-pendientes. Fire-and-forget.
-        if (!string.IsNullOrEmpty(factura.SmartCareCorrelationId))
-        {
-            try
-            {
-                await _smartCareWebhook.NotificarCambioEstadoAsync(factura);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex,
-                    "[SmartCare-Webhook] Falla al notificar diferimiento manual de factura {FacturaId} a SmartCare (CorrelationId={Cid}).",
-                    factura.Id, factura.SmartCareCorrelationId);
-            }
-        }
     }
 
     /// <summary>

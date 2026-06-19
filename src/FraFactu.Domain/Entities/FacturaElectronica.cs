@@ -189,40 +189,11 @@ namespace FraFactu.Domain.Entities
         public int? CajaId { get; set; }
         public Caja? Caja { get; set; }
 
-        // ==========================================
-        // 8. INTEGRACIÓN SMARTCARE
-        // ==========================================
-
         /// <summary>
-        /// ID de correlación generado por SmartCare para rastrear esta factura.
-        /// Permite idempotencia: si llega el mismo CorrelationId, se retorna la factura existente.
-        /// </summary>
-        public string? SmartCareCorrelationId { get; set; }
-
-        /// <summary>
-        /// URL de webhook en SmartCare que recibe actualizaciones de estado (PROCESADO, RECHAZADO).
-        /// </summary>
-        public string? SmartCareWebhookUrl { get; set; }
-
-        /// <summary>
-        /// ID de la clínica en SmartCare que originó esta factura (UUID string).
-        /// </summary>
-        public string? SmartCareClinicId { get; set; }
-
-        /// <summary>
-        /// ID de la visita/consulta en SmartCare que originó esta factura (UUID string).
-        /// </summary>
-        public string? SmartCareVisitId { get; set; }
-
-        /// <summary>
-        /// Plan B Hub-as-Emisor — Fase 2 (Opcion Hibrida). Snapshot point-in-time
-        /// del payload fiscal del Hub (Emisor + Sucursal) tal como existia en
-        /// SmartHub al momento de crear el prefill desde SmartCare. Se copia desde
-        /// <c>FacturaPrefill.SnapshotFiscalJson</c> al consumir. Permite auditoria
-        /// historica fiscal: si admin cambia el NIT del Hub despues, las facturas
-        /// anteriores conservan el dato que se uso al emitirlas. Null si la
-        /// factura no provino de un prefill SmartCare con payload fiscal (flujo
-        /// manual o prefill pre-Fase 2).
+        /// Snapshot point-in-time del payload fiscal (Emisor + Sucursal) tal como
+        /// existía al emitir la factura. Permite auditoría histórica: si luego se
+        /// cambian datos fiscales del Emisor, las facturas anteriores conservan el
+        /// dato usado al emitirlas. Null si no se capturó snapshot.
         /// </summary>
         public string? SnapshotFiscalJson { get; set; }
     }
