@@ -113,10 +113,9 @@ builder.Services.AddSingleton<IEncryptionService, AesEncryptionService>();
 // Configuración Email por Defecto (fallback cuando el emisor no tiene SMTP propio)
 builder.Services.Configure<DefaultEmailSettings>(builder.Configuration.GetSection("DefaultEmail"));
 
-// Configuración Supabase
+// Configuración Supabase (solo storage; el login vía Supabase se eliminó en F1)
 builder.Services.Configure<SupabaseSettings>(builder.Configuration.GetSection("Supabase"));
-builder.Services.AddHttpClient(); // Required for Supabase HTTP calls
-builder.Services.AddScoped<ISupabaseAuthService, SupabaseAuthService>();
+builder.Services.AddHttpClient(); // Required for Supabase storage HTTP calls
 
 // Authentication & Authorization
 builder.Services.AddAuthentication(options =>
@@ -136,48 +135,8 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings?.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings?.SecretKey ?? ""))
     };
-
-    // Revocacion cross-app: si el JWT viene de un SSO Hub trae usuario_hub_id +
-    // token_version. Pegamos a SmartHub para confirmar que ese token_version
-    // sigue vigente; si el Hub bumpeo (logout, cambio de org, cambio de rol,
-    // asignacion/revocacion de Hub), respondemos 401 para que Smartix-FE
-    // dispare re-SSO contra el Hub. JWTs de login local sin esos claims
-    // simplemente saltean el check (fail-open).
-    options.Events = new JwtBearerEvents
-    {
-        OnTokenValidated = async ctx =>
-        {
-            try
-            {
-                var principal = ctx.Principal;
-                if (principal == null) return;
-
-                var tvClaim = principal.FindFirst("token_version")?.Value;
-                var hubIdClaim = principal.FindFirst("usuario_hub_id")?.Value;
-
-                if (string.IsNullOrEmpty(tvClaim) || string.IsNullOrEmpty(hubIdClaim)) return;
-                if (!int.TryParse(tvClaim, out var jwtTokenVersion)) return;
-                if (!int.TryParse(hubIdClaim, out var usuarioHubId)) return;
-
-                var hubApi = ctx.HttpContext.RequestServices.GetService<FraFactu.Application.Interfaces.ISmartHubApiService>();
-                if (hubApi == null) return;
-                var currentVersion = await hubApi.GetTokenVersionAsync(usuarioHubId);
-
-                if (currentVersion.HasValue && currentVersion.Value != jwtTokenVersion)
-                {
-                    var logger = ctx.HttpContext.RequestServices.GetService<ILoggerFactory>()?.CreateLogger("Auth.TokenVersion");
-                    logger?.LogWarning("TOKEN_REVOKED usuarioHubId={Id} jwt={Jwt} current={Current}",
-                        usuarioHubId, jwtTokenVersion, currentVersion.Value);
-                    ctx.Fail("Token revocado por cambio en SmartHub. Vuelve a iniciar sesion desde el Hub.");
-                }
-            }
-            catch (Exception ex)
-            {
-                var logger = ctx.HttpContext.RequestServices.GetService<ILoggerFactory>()?.CreateLogger("Auth.TokenVersion");
-                logger?.LogError(ex, "OnTokenValidated tokenVersion check fallo (fail-open)");
-            }
-        }
-    };
+    // Identidad 100% local: el JWT se valida solo por firma/issuer/audience/vida.
+    // La revocación local (TokenVersion propio) se añade en F2.
 });
 
 // Authorization con Permisos
@@ -300,22 +259,11 @@ builder.Services.AddScoped<ISupabaseStorageService, FraFactu.Infrastructure.Serv
 // Servicio de Suscripciones
 builder.Services.AddScoped<ISuscripcionService, FraFactu.Infrastructure.Services.SuscripcionService>();
 
-// Integración SmartHub — migración bidireccional de inventario
+// SmartHubSettings: aún lo consumen los controllers cross-app (Internal*/Sync*/
+// InventoryMigration) que se eliminan en F1.3 junto con la sincronización HTTP.
 builder.Services.Configure<FraFactu.Application.Common.Settings.SmartHubSettings>(
     builder.Configuration.GetSection("SmartHub"));
 builder.Services.AddScoped<IInventoryMigrationService, FraFactu.Infrastructure.Services.InventoryMigrationService>();
-
-// Cliente HTTP outgoing hacia SmartHub (SSO validate-code, etc.)
-builder.Services.AddHttpClient<FraFactu.Application.Interfaces.ISmartHubApiService,
-    FraFactu.Infrastructure.Services.SmartHubApiService>();
-
-// Registro de roles de Smartix en SmartHub al arrancar (Fase 1 centralización de usuarios).
-// Usa HttpClient nombrado para evitar socket exhaustion y permitir tests con DelegatingHandler.
-builder.Services.AddHttpClient(nameof(FraFactu.Infrastructure.Jobs.HubRoleRegistrationService));
-builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.HubRoleRegistrationService>();
-
-// Webhooks Hub→Smartix de gestión de usuarios (Fase 2 centralización).
-builder.Services.AddScoped<IHubUsuarioSyncService, FraFactu.Infrastructure.Services.HubUsuarioSyncService>();
 
 // Background Jobs - Envío automático de lotes
 builder.Services.AddScoped<FraFactu.Infrastructure.Jobs.EnvioAutomaticoLotesJob>();

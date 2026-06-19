@@ -48,16 +48,7 @@ namespace FraFactu.Application.Interfaces
         Task<LoginResponseDto?> GoogleLoginAsync(FraFactu.Application.DTOs.Auth.GoogleAuthDto googleAuthDto);
 
         /// <summary>
-        /// SSO Hub→Smartix: canjea un exchange code emitido por SmartHub,
-        /// crea/actualiza el usuario local y emite un JWT de Smartix.
-        /// Lanza UnauthorizedAccessException si el code es invalido o el usuario
-        /// esta inactivo. Lanza InvalidOperationException si el Hub del usuario
-        /// no esta vinculado a un Emisor en Smartix.
-        /// </summary>
-        Task<LoginResponseDto> HubLoginAsync(FraFactu.Application.DTOs.Auth.HubLoginRequestDto request);
-
-        /// <summary>
-        /// UsuarioCompartido + Plan B Hub-as-Emisor: cambia el Emisor activo del
+        /// Cambia el Emisor activo del
         /// usuario autenticado al que solicite, siempre que figure en la lista
         /// <paramref name="emisoresAccesibles"/> (claim del JWT actual). Persiste
         /// <c>Usuarios.EmisorId</c> y reemite un JWT con el nuevo Emisor activo y
@@ -74,21 +65,6 @@ namespace FraFactu.Application.Interfaces
             IReadOnlyCollection<int> emisoresAccesibles,
             int? hubUsuarioId = null,
             int? tokenVersion = null);
-
-        /// <summary>
-        /// Bug #3 (UsuarioCompartido / Plan B Hub-as-Emisor) — 2026-05-29.
-        /// Refresca el claim <c>emisores_accesibles</c> del JWT pidiendole a
-        /// SmartHub la lista actualizada via internal endpoint. Reemite el JWT
-        /// con la misma sesion (mismos hub_usuario_id / token_version / Emisor
-        /// activo / sucursales) y la lista nueva. No bumpea TokenVersion.
-        ///
-        /// Retorna null si:
-        ///  - El JWT no es SSO (sin <paramref name="hubUsuarioId"/>): no hay nada que refrescar.
-        ///  - El usuario fue desactivado o no existe.
-        ///  - SmartHub no respondio (timeout/5xx/ApiKey faltante).
-        /// El controller traduce null a 502 sin tocar el JWT existente.
-        /// </summary>
-        Task<LoginResponseDto?> RefreshEmisoresAsync(int usuarioId, int? hubUsuarioId, int? tokenVersion);
 
         /// <summary>
         /// Vincula una cuenta de Google a un usuario existente

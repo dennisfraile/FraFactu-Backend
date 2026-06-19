@@ -49,14 +49,12 @@ namespace FraFactu.Tests.UnitTests.Services
             });
 
             var googleValidator = new Mock<IGoogleTokenValidator>();
-            var hubApi = new Mock<ISmartHubApiService>();
 
             _authService = new AuthService(
                 _context,
                 jwtSettings.Object,
                 googleAuthSettings.Object,
                 googleValidator.Object,
-                hubApi.Object,
                 NullLogger<AuthService>.Instance
             );
 
