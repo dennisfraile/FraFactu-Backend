@@ -75,17 +75,6 @@ namespace FraFactu.Domain.Entities
         public int EmisorId { get; set; }
         public Emisor Emisor { get; set; } = null!;
 
-        // ============================================
-        // INTEGRACIÓN SMARTHUB (Plan B Hub-as-Emisor — D14)
-        // ============================================
-
-        /// <summary>
-        /// ID de la Sucursal en SmartHub que corresponde a esta Sucursal de Smartix (1:1).
-        /// Null si la sucursal aún no está vinculada a SmartHub. Unique cuando no es null
-        /// (una Sucursal Hub se vincula a lo sumo a una Sucursal Smartix).
-        /// </summary>
-        public int? HubSucursalId { get; set; }
-
         // Facturas emitidas desde esta sucursal
         public ICollection<FacturaElectronica> Facturas { get; set; } = new List<FacturaElectronica>();
     }

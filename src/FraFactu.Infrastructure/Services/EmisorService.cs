@@ -230,36 +230,24 @@ namespace FraFactu.Infrastructure.Services
             if (emisor == null)
                 return null;
 
-            // Plan B Hub-as-Emisor — Fase 3 Task 19.
-            // Si el emisor está vinculado a un Hub, los campos fiscales identitarios
-            // (Nrc, NombreComercial, actividad económica, ubicación, contacto, tipo
-            // de establecimiento) son source-of-truth en SmartHub. Detectamos intentos
-            // de edición desde Smartix y los descartamos con warning. El resto del
-            // payload (Mh*, Smtp*, Gmail*, ambiente, logo) se aplica normalmente.
-            if (emisor.HubId.HasValue)
-            {
-                LogIntentosDeEdicionFiscal(emisor, dto);
-            }
-            else
-            {
-                // Emisor legacy sin vincular a Hub: comportamiento original intacto.
-                emisor.NombreComercial = dto.NombreComercial;
-                emisor.CorreoElectronico = dto.CorreoElectronico;
-                emisor.Telefono = dto.Telefono;
-                emisor.Direccion = dto.Direccion;
-                emisor.Nrc = dto.Nrc ?? string.Empty;
-                emisor.CodigoActividad = dto.CodigoActividad ?? string.Empty;
-                emisor.DescripcionActividad = dto.DescripcionActividad ?? string.Empty;
+            // FraFactu es dueño de los datos fiscales identitarios (ya no hay Hub
+            // como fuente de verdad): se aplican siempre.
+            emisor.NombreComercial = dto.NombreComercial;
+            emisor.CorreoElectronico = dto.CorreoElectronico;
+            emisor.Telefono = dto.Telefono;
+            emisor.Direccion = dto.Direccion;
+            emisor.Nrc = dto.Nrc ?? string.Empty;
+            emisor.CodigoActividad = dto.CodigoActividad ?? string.Empty;
+            emisor.DescripcionActividad = dto.DescripcionActividad ?? string.Empty;
 
-                if (dto.CatDepartamentoId.HasValue)
-                    emisor.CatDepartamentoId = dto.CatDepartamentoId.Value;
-                if (dto.CatMunicipioId.HasValue)
-                    emisor.CatMunicipioId = dto.CatMunicipioId.Value;
-                if (dto.CatDistritoId.HasValue)
-                    emisor.CatDistritoId = dto.CatDistritoId;
-                if (dto.CatTipoEstablecimientoId.HasValue)
-                    emisor.CatTipoEstablecimientoId = dto.CatTipoEstablecimientoId.Value;
-            }
+            if (dto.CatDepartamentoId.HasValue)
+                emisor.CatDepartamentoId = dto.CatDepartamentoId.Value;
+            if (dto.CatMunicipioId.HasValue)
+                emisor.CatMunicipioId = dto.CatMunicipioId.Value;
+            if (dto.CatDistritoId.HasValue)
+                emisor.CatDistritoId = dto.CatDistritoId;
+            if (dto.CatTipoEstablecimientoId.HasValue)
+                emisor.CatTipoEstablecimientoId = dto.CatTipoEstablecimientoId.Value;
 
 
 
@@ -327,48 +315,6 @@ namespace FraFactu.Infrastructure.Services
             return emisor.Activo;
         }
 
-
-        /// <summary>
-        /// Plan B Hub-as-Emisor — Fase 3 Task 19.
-        /// Loguea como warning cada campo fiscal identitario que el cliente intenta
-        /// modificar cuando el emisor ya está vinculado a un Hub. Útil para detectar
-        /// UIs no actualizadas (frontend sin el banner read-only) o llamadas API
-        /// directas que aún apuntan a este endpoint para editar datos fiscales.
-        /// El método NO aplica los cambios — eso es responsabilidad del caller, que
-        /// simplemente omite el bloque de asignación cuando hay HubId.
-        /// </summary>
-        private void LogIntentosDeEdicionFiscal(Emisor emisor, UpdatePerfilEmisorDto dto)
-        {
-            var intentos = new List<string>();
-
-            if (dto.NombreComercial != null && dto.NombreComercial != emisor.NombreComercial)
-                intentos.Add($"NombreComercial: '{emisor.NombreComercial}' → '{dto.NombreComercial}'");
-            if (!string.IsNullOrEmpty(dto.CorreoElectronico) && dto.CorreoElectronico != emisor.CorreoElectronico)
-                intentos.Add($"CorreoElectronico: '{emisor.CorreoElectronico}' → '{dto.CorreoElectronico}'");
-            if (!string.IsNullOrEmpty(dto.Telefono) && dto.Telefono != emisor.Telefono)
-                intentos.Add($"Telefono: '{emisor.Telefono}' → '{dto.Telefono}'");
-            if (!string.IsNullOrEmpty(dto.Direccion) && dto.Direccion != emisor.Direccion)
-                intentos.Add($"Direccion: '{emisor.Direccion}' → '{dto.Direccion}'");
-            if (dto.Nrc != null && dto.Nrc != emisor.Nrc)
-                intentos.Add($"Nrc: '{emisor.Nrc}' → '{dto.Nrc}'");
-            if (dto.CodigoActividad != null && dto.CodigoActividad != emisor.CodigoActividad)
-                intentos.Add($"CodigoActividad: '{emisor.CodigoActividad}' → '{dto.CodigoActividad}'");
-            if (dto.DescripcionActividad != null && dto.DescripcionActividad != emisor.DescripcionActividad)
-                intentos.Add($"DescripcionActividad: '{emisor.DescripcionActividad}' → '{dto.DescripcionActividad}'");
-            if (dto.CatDepartamentoId.HasValue && dto.CatDepartamentoId.Value != emisor.CatDepartamentoId)
-                intentos.Add($"CatDepartamentoId: {emisor.CatDepartamentoId} → {dto.CatDepartamentoId.Value}");
-            if (dto.CatMunicipioId.HasValue && dto.CatMunicipioId.Value != emisor.CatMunicipioId)
-                intentos.Add($"CatMunicipioId: {emisor.CatMunicipioId} → {dto.CatMunicipioId.Value}");
-            if (dto.CatTipoEstablecimientoId.HasValue && dto.CatTipoEstablecimientoId.Value != emisor.CatTipoEstablecimientoId)
-                intentos.Add($"CatTipoEstablecimientoId: {emisor.CatTipoEstablecimientoId} → {dto.CatTipoEstablecimientoId.Value}");
-
-            if (intentos.Count > 0)
-            {
-                _logger.LogWarning(
-                    "[UpdateMiPerfil] Emisor {EmisorId} (HubId={HubId}) intentó editar campos fiscales identitarios via Smartix; cambios descartados (source of truth = SmartHub). Campos: {Campos}",
-                    emisor.Id, emisor.HubId, string.Join("; ", intentos));
-            }
-        }
 
         private async Task ConfigurarSmtpAutomaticoAsync(Emisor emisor, string smtpUser, CancellationToken ct = default)
         {

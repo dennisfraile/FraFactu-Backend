@@ -34,9 +34,7 @@ public class CompraExternaServiceEditarConfirmadaTests : IDisposable
         _context = TestDatabaseHelper.CreateInMemoryContext();
         TestDatabaseHelper.SeedTestData(_context);
         _emisor = _context.Emisores.First();
-        _emisor.HubId = 99;
         _sucursal = _context.Sucursales.First(s => s.EmisorId == _emisor.Id);
-        _sucursal.HubSucursalId = 77;
         _bodega = _context.Bodegas.First(b => b.SucursalId == _sucursal.Id);
         _proveedor = new Proveedor
         {

@@ -91,12 +91,5 @@ public class EmisorConfiguration : IEntityTypeConfiguration<Emisor>
         // Índices
         builder.HasIndex(e => e.Nit).IsUnique();
         builder.HasIndex(e => e.Nrc);
-
-        // Plan B Hub-as-Emisor: 1 Emisor ↔ 1 Hub. El unique filtrado permite
-        // múltiples emisores sin vincular (HubId NULL) y a la vez impide que
-        // dos Emisores compartan el mismo Hub.
-        builder.HasIndex(e => e.HubId)
-            .IsUnique()
-            .HasFilter("\"HubId\" IS NOT NULL");
     }
 }

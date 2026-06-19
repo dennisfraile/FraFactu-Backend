@@ -74,14 +74,6 @@ namespace FraFactu.Infrastructure.Persistence.Configurations
                 .IsUnique()
                 .HasFilter("\"Activo\" = true")
                 .HasDatabaseName("IX_Sucursal_Emisor_CodigoEstablecimiento");
-
-            // Plan B Hub-as-Emisor (D14): 1 Sucursal Smartix ↔ 1 Sucursal Hub.
-            // Filtered unique: multiples sucursales sin vincular conviven, pero
-            // no se puede vincular dos sucursales Smartix al mismo Hub Sucursal.
-            builder.HasIndex(s => s.HubSucursalId)
-                .IsUnique()
-                .HasFilter("\"HubSucursalId\" IS NOT NULL")
-                .HasDatabaseName("IX_Sucursal_HubSucursalId");
         }
     }
 }

@@ -62,14 +62,5 @@ namespace FraFactu.Application.DTOs.Emisores
         // Estadísticas opcionales
         public int? TotalUsuarios { get; set; }
         public int? TotalFacturas { get; set; }
-
-        /// <summary>
-        /// Plan B Hub-as-Emisor — Fase 3 Task 18.
-        /// Id del Hub en SmartHub vinculado a este Emisor (1:1). Si está poblado,
-        /// las UIs deben mostrar los datos fiscales identitarios como read-only y
-        /// redirigir al admin a SmartHub para editar (Smartix los descarta server-
-        /// side, ver UpdateMiPerfilAsync). Null para emisores legacy.
-        /// </summary>
-        public int? HubId { get; set; }
     }
 }

@@ -54,10 +54,6 @@ namespace FraFactu.Infrastructure.Persistence.Configurations
             builder.HasIndex(u => u.ProveedorExternoId)
                 .HasDatabaseName("IX_Usuario_ProveedorExternoId");
 
-            // Índice en HubUsuarioId (SSO) para lookup en cada validate-code
-            builder.HasIndex(u => u.HubUsuarioId)
-                .HasDatabaseName("IX_Usuario_HubUsuarioId");
-
             // Índice compuesto Emisor + Email
             builder.HasIndex(u => new { u.EmisorId, u.Email })
                 .HasDatabaseName("IX_Usuario_Emisor_Email");
