@@ -99,13 +99,10 @@ namespace FraFactu.API.Controllers
         }
 
         /// <summary>
-        /// Crea un nuevo usuario.
+        /// Crea un nuevo usuario. Si no se envía contraseña, se genera una clave
+        /// temporal y se envía por correo (el usuario debe cambiarla en el primer
+        /// ingreso). FraFactu gestiona la identidad localmente (sin Hub).
         /// </summary>
-        /// <remarks>
-        /// Plan centralizacion F4: usar SmartHub para crear usuarios. Este endpoint
-        /// sera removido en F7 cuando el frontend ya no lo invoque.
-        /// </remarks>
-        [Obsolete("Usar SmartHub para gestion de usuarios. Sera removido en F7 del plan de centralizacion.")]
         [HttpPost]
         [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal")]
         [ProducesResponseType(typeof(UsuarioDto), StatusCodes.Status201Created)]
@@ -135,13 +132,10 @@ namespace FraFactu.API.Controllers
         }
 
         /// <summary>
-        /// Actualiza un usuario existente.
+        /// Actualiza un usuario existente (datos, rol y sucursales). El cambio de
+        /// rol, la desactivación o el reseteo de contraseña revocan las sesiones
+        /// vigentes del usuario (TokenVersion).
         /// </summary>
-        /// <remarks>
-        /// Plan centralizacion F4: la edicion de usuarios de otros vive en SmartHub.
-        /// "Editar mi perfil" (self-service) sigue usando este endpoint hasta F6.
-        /// </remarks>
-        [Obsolete("Usar SmartHub para edicion de otros usuarios. Sera removido en F7 (mantener para self-edit hasta F6).")]
         [HttpPut("{id}")]
         [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal")]
         [ProducesResponseType(typeof(UsuarioDto), StatusCodes.Status200OK)]
@@ -204,12 +198,8 @@ namespace FraFactu.API.Controllers
         }
 
         /// <summary>
-        /// Desactiva (elimina lógicamente) un usuario.
+        /// Desactiva (elimina lógicamente) un usuario y revoca sus sesiones vigentes.
         /// </summary>
-        /// <remarks>
-        /// Plan centralizacion F4: desactivar usuarios vive en SmartHub.
-        /// </remarks>
-        [Obsolete("Usar SmartHub para desactivar usuarios. Sera removido en F7 del plan de centralizacion.")]
         [HttpDelete("{id}")]
         [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -238,12 +228,9 @@ namespace FraFactu.API.Controllers
         }
 
         /// <summary>
-        /// Alterna el estado activo/inactivo de un usuario.
+        /// Alterna el estado activo/inactivo de un usuario. Al desactivarlo, revoca
+        /// sus sesiones vigentes.
         /// </summary>
-        /// <remarks>
-        /// Plan centralizacion F4: cambiar estado de usuarios vive en SmartHub.
-        /// </remarks>
-        [Obsolete("Usar SmartHub para cambiar estado de usuarios. Sera removido en F7 del plan de centralizacion.")]
         [HttpPatch("{id}/toggle-active")]
         [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]

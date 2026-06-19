@@ -55,6 +55,7 @@ namespace FraFactu.Tests.UnitTests.Services
                 jwtSettings.Object,
                 googleAuthSettings.Object,
                 googleValidator.Object,
+                new Mock<IAuthEmailService>().Object,
                 NullLogger<AuthService>.Instance
             );
 

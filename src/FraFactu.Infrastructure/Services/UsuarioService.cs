@@ -6,6 +6,7 @@ using FraFactu.Application.DTOs.Usuarios;
 using FraFactu.Application.Interfaces;
 using FraFactu.Domain.Entities;
 using FraFactu.Infrastructure.Persistence;
+using FraFactu.Infrastructure.Security;
 
 namespace FraFactu.Infrastructure.Services
 {
@@ -16,19 +17,25 @@ namespace FraFactu.Infrastructure.Services
         private readonly IValidator<CreateUsuarioDto> _createValidator;
         private readonly IValidator<UpdateUsuarioDto> _updateValidator;
         private readonly IAuthService _authService;
+        private readonly IAuthEmailService _authEmailService;
+
+        // Vigencia por defecto de la clave temporal generada en el alta.
+        private static readonly TimeSpan ClaveTemporalVigencia = TimeSpan.FromDays(7);
 
         public UsuarioService(
             ApplicationDbContext context,
             IMapper mapper,
             IValidator<CreateUsuarioDto> createValidator,
             IValidator<UpdateUsuarioDto> updateValidator,
-            IAuthService authService)
+            IAuthService authService,
+            IAuthEmailService authEmailService)
         {
             _context = context;
             _mapper = mapper;
             _createValidator = createValidator;
             _updateValidator = updateValidator;
             _authService = authService;
+            _authEmailService = authEmailService;
         }
 
         public async Task<PaginatedResponse<UsuarioListDto>> GetAllAsync(PaginatedRequest request, int? emisorId = null, bool? soloActivos = null, List<string>? rolesPermitidos = null, List<int>? sucursalIds = null)
@@ -153,13 +160,24 @@ namespace FraFactu.Infrastructure.Services
                     throw new InvalidOperationException("Una o más sucursales no pertenecen al emisor.");
             }
 
+            // Alta por admin: si no se fija contraseña, se genera una temporal que
+            // el usuario deberá cambiar en el primer ingreso (se envía por correo).
+            var conClaveTemporal = string.IsNullOrEmpty(dto.Password);
+            var claveTemporal = conClaveTemporal ? SecureTokenGenerator.GenerateTemporaryPassword() : null;
+
             var usuario = new Usuario
             {
                 NombreCompleto = dto.NombreCompleto,
                 Email = dto.Email,
-                PasswordHash = string.IsNullOrEmpty(dto.Password) ? null : _authService.HashPassword(dto.Password),
-                RequiereCambioPwd = false,
-                PermiteCambioPwd = false,
+                PasswordHash = conClaveTemporal
+                    ? _authService.HashPassword(claveTemporal!)
+                    : _authService.HashPassword(dto.Password!),
+                RequiereCambioPwd = conClaveTemporal,
+                // El usuario con clave temporal debe poder cambiarla en el primer ingreso.
+                PermiteCambioPwd = conClaveTemporal ? true : dto.PermiteCambioPwd,
+                ExpiracionPwdTemporal = conClaveTemporal
+                    ? DateTime.UtcNow.Add(ClaveTemporalVigencia)
+                    : null,
                 EmisorId = dto.EmisorId,
                 RolId = dto.RolId,
                 AccesoTodasSucursales = dto.AccesoTodasSucursales,
@@ -211,6 +229,13 @@ namespace FraFactu.Infrastructure.Services
             {
                 await _context.Entry(uc).Reference(x => x.Caja).LoadAsync();
                 await _context.Entry(uc.Caja).Reference(c => c.Sucursal).LoadAsync();
+            }
+
+            // Enviar la clave temporal por correo (tras persistir todo el alta).
+            if (conClaveTemporal)
+            {
+                await _authEmailService.EnviarClaveTemporalAsync(
+                    usuario.Email, usuario.NombreCompleto, claveTemporal!);
             }
 
             return MapToDto(usuario);
@@ -273,6 +298,12 @@ namespace FraFactu.Infrastructure.Services
                 usuario.ProveedorExternoId = null;
             }
 
+            // Detectar cambios sensibles a la seguridad ANTES de mutar la entidad,
+            // para revocar las sesiones vigentes (TokenVersion++) cuando aplique.
+            var rolCambio = usuario.RolId != dto.RolId;
+            var seDesactiva = usuario.Activo && !dto.Activo;
+            var passwordCambia = !string.IsNullOrEmpty(dto.Password);
+
             // Actualizar campos básicos
             usuario.NombreCompleto = dto.NombreCompleto;
             usuario.Email = dto.Email;
@@ -281,9 +312,16 @@ namespace FraFactu.Infrastructure.Services
             usuario.AccesoTodasSucursales = dto.AccesoTodasSucursales;
 
             // Si se proporciona password, hashearlo y actualizarlo
-            if (!string.IsNullOrEmpty(dto.Password))
+            if (passwordCambia)
             {
-                usuario.PasswordHash = _authService.HashPassword(dto.Password);
+                usuario.PasswordHash = _authService.HashPassword(dto.Password!);
+            }
+
+            // Revocación local: cambio de rol, desactivación o reset de contraseña
+            // por un admin invalidan los JWT emitidos hasta ahora.
+            if (rolCambio || seDesactiva || passwordCambia)
+            {
+                usuario.TokenVersion++;
             }
 
             // Actualizar sucursales asignadas: eliminar las anteriores y agregar las nuevas
@@ -345,6 +383,8 @@ namespace FraFactu.Infrastructure.Services
                 return false;
 
             usuario.Activo = false;
+            // Revocación local: al desactivar, invalidar las sesiones vigentes.
+            usuario.TokenVersion++;
             await _context.SaveChangesAsync();
             return true;
         }
@@ -358,6 +398,9 @@ namespace FraFactu.Infrastructure.Services
                 throw new KeyNotFoundException($"Usuario con ID {id} no encontrado.");
 
             usuario.Activo = !usuario.Activo;
+            // Revocación local: si se desactiva, invalidar las sesiones vigentes.
+            if (!usuario.Activo)
+                usuario.TokenVersion++;
             await _context.SaveChangesAsync();
             return usuario.Activo;
         }

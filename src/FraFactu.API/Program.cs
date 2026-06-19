@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.IO.Compression;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -135,8 +136,38 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings?.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings?.SecretKey ?? ""))
     };
-    // Identidad 100% local: el JWT se valida solo por firma/issuer/audience/vida.
-    // La revocación local (TokenVersion propio) se añade en F2.
+
+    // Identidad 100% local: además de firma/issuer/audience/vida, se valida la
+    // revocación local. El claim "token_version" del JWT debe coincidir con el
+    // Usuario.TokenVersion actual; si el usuario hizo logout, cambió su
+    // contraseña, cambió de rol o fue desactivado, su TokenVersion subió y el
+    // token queda invalidado. Semántica fail-closed (ver ITokenVersionValidator).
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var principal = context.Principal;
+            var subClaim = principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? principal?.FindFirst("sub")?.Value;
+
+            if (!int.TryParse(subClaim, out var usuarioId))
+            {
+                context.Fail("Token sin identificador de usuario válido.");
+                return;
+            }
+
+            int? tokenVersionClaim =
+                int.TryParse(principal?.FindFirst("token_version")?.Value, out var tv) ? tv : null;
+
+            var validator = context.HttpContext.RequestServices
+                .GetRequiredService<ITokenVersionValidator>();
+
+            if (!await validator.IsCurrentAsync(usuarioId, tokenVersionClaim))
+            {
+                context.Fail("Sesión revocada: token_version no vigente.");
+            }
+        }
+    };
 });
 
 // Authorization con Permisos
@@ -157,6 +188,7 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Servicios de Aplicación
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITokenVersionValidator, FraFactu.Infrastructure.Services.TokenVersionValidator>();
 builder.Services.AddScoped<IUsuarioService, FraFactu.Infrastructure.Services.UsuarioService>();
 builder.Services.AddScoped<ICatalogoService, FraFactu.Infrastructure.Services.CatalogoService>();
 builder.Services.AddSingleton<IProveedorSmtpResolver, FraFactu.Infrastructure.Services.ProveedorSmtpResolver>();
@@ -250,6 +282,7 @@ builder.Services.AddScoped<IHaciendaRetryService, HaciendaRetryService>();
 //Services de Features (Dashboard, Email, Export)
 builder.Services.AddScoped<IDashboardService, FraFactu.Infrastructure.Services.DashboardService>();
 builder.Services.AddScoped<IEmailService, FraFactu.Infrastructure.Services.EmailService>();
+builder.Services.AddScoped<IAuthEmailService, FraFactu.Infrastructure.Services.AuthEmailService>();
 builder.Services.AddScoped<IExportService, FraFactu.Infrastructure.Services.ExportService>();
 builder.Services.AddScoped<IImportService, FraFactu.Infrastructure.Services.ImportService>();
 builder.Services.AddScoped<ISupabaseStorageService, FraFactu.Infrastructure.Services.SupabaseStorageService>();
@@ -411,6 +444,10 @@ app.UseResponseCaching();
 // Authentication & Authorization DEBE estar antes de MapControllers
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Restricción de primer ingreso: tras autenticar, si el usuario tiene un cambio
+// de contraseña obligatorio pendiente, solo se le permite el endpoint de cambio.
+app.UseMiddleware<FraFactu.API.Middleware.RequirePasswordChangeMiddleware>();
 
 // Mapear controladores
 app.MapControllers();
