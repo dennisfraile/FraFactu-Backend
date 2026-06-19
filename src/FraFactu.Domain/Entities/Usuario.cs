@@ -39,6 +39,27 @@ namespace FraFactu.Domain.Entities
         public DateTime? UltimoAcceso { get; set; }          // Fecha y hora del último acceso exitoso
         public EstadoUsuario Estado { get; set; } = EstadoUsuario.Activo;
 
+        // REVOCACIÓN LOCAL DE SESIONES (F2)
+        /// <summary>
+        /// Versión del token. Se incrementa en logout / cambio de contraseña /
+        /// cambio de rol / desactivación para invalidar los JWT emitidos antes.
+        /// El middleware OnTokenValidated compara el claim "token_version" del JWT
+        /// con este valor y rechaza el token si no coinciden.
+        /// </summary>
+        public int TokenVersion { get; set; } = 0;
+
+        // RESET DE CONTRASEÑA POR CORREO (F2)
+        /// <summary>
+        /// Hash (SHA-256) del token de reset de contraseña. Se guarda el hash,
+        /// nunca el token en claro. Null cuando no hay reset pendiente.
+        /// </summary>
+        public string? PasswordResetTokenHash { get; set; }
+
+        /// <summary>
+        /// Expiración (UTC) del token de reset de contraseña. Token de un solo uso.
+        /// </summary>
+        public DateTime? PasswordResetTokenExpira { get; set; }
+
         // RELACIÓN CON EMPRESA (TENANT)
         // RELACIÓN CON EMPRESA (TENANT)
         public int? EmisorId { get; set; }

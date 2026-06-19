@@ -45,6 +45,19 @@ namespace FraFactu.Infrastructure.Persistence.Configurations
                 .HasConversion<int>()
                 .IsRequired();
 
+            // Revocación local de sesiones (F2)
+            builder.Property(u => u.TokenVersion)
+                .IsRequired()
+                .HasDefaultValue(0);
+
+            // Reset de contraseña por correo (F2): se guarda el hash, no el token
+            builder.Property(u => u.PasswordResetTokenHash)
+                .HasMaxLength(255)
+                .IsRequired(false);
+
+            builder.Property(u => u.PasswordResetTokenExpira)
+                .IsRequired(false);
+
             // Índice único en Email
             builder.HasIndex(u => u.Email)
                 .IsUnique()
