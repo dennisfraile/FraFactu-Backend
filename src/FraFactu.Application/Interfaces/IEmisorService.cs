@@ -71,13 +71,5 @@ namespace FraFactu.Application.Interfaces
         /// Desconectar OAuth2 de Gmail del emisor
         /// </summary>
         Task DisconnectGmailOAuthAsync(int emisorId);
-
-        /// <summary>
-        /// Sync server-to-server desde SmartHub: fija el flag Activo del Emisor
-        /// cuyo HubId coincide con el indicado. Idempotente: si ya estaba en el
-        /// estado pedido devuelve Cambio=false. Si no existe Emisor para ese
-        /// HubId devuelve Encontrado=false sin error.
-        /// </summary>
-        Task<DTOs.Sync.SyncEmisorToggleResponseDto> SetActivoByHubIdAsync(int hubId, bool activo);
     }
 }

@@ -198,8 +198,6 @@ builder.Services.AddScoped<FraFactu.Application.Interfaces.IEmailReaderService, 
 builder.Services.AddScoped<FraFactu.Application.Interfaces.IEmailLectorWorker, FraFactu.Infrastructure.Services.EmailLectorWorker>();
 builder.Services.AddScoped<FraFactu.Application.Services.IDteRecibidoService, FraFactu.Infrastructure.Services.DteRecibidoService>();
 
-// F4 (Plan inventario desde DTE): consulta de divergencias persistidas por el job de reconciliacion.
-builder.Services.AddScoped<FraFactu.Application.Services.IDivergenciaInventarioService, FraFactu.Infrastructure.Services.DivergenciaInventarioService>();
 builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.LecturaCorreoConsumer>();
 builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.LecturaCorreoAutomaticaScheduler>();
 
@@ -259,12 +257,6 @@ builder.Services.AddScoped<ISupabaseStorageService, FraFactu.Infrastructure.Serv
 // Servicio de Suscripciones
 builder.Services.AddScoped<ISuscripcionService, FraFactu.Infrastructure.Services.SuscripcionService>();
 
-// SmartHubSettings: aún lo consumen los controllers cross-app (Internal*/Sync*/
-// InventoryMigration) que se eliminan en F1.3 junto con la sincronización HTTP.
-builder.Services.Configure<FraFactu.Application.Common.Settings.SmartHubSettings>(
-    builder.Configuration.GetSection("SmartHub"));
-builder.Services.AddScoped<IInventoryMigrationService, FraFactu.Infrastructure.Services.InventoryMigrationService>();
-
 // Background Jobs - Envío automático de lotes
 builder.Services.AddScoped<FraFactu.Infrastructure.Jobs.EnvioAutomaticoLotesJob>();
 builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.EnvioAutomaticoBackgroundService>();
@@ -278,24 +270,6 @@ builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.SuscripcionRemind
 
 // Background Job - Recordatorios de cuotas (vencidas / por vencer)
 builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.RecordatorioCuotasBackgroundService>();
-
-// F3 (Plan inventario desde DTE): cliente HTTP + consumer del outbox que
-// replica movimientos a SmartInventory. CrossAppRetry maneja 5xx/429/timeouts
-// con backoff exponencial antes de bubblear al consumer (que ya tiene su
-// propio backoff de reintentos a nivel BD).
-builder.Services.Configure<FraFactu.Application.Common.Settings.SmartInventorySettings>(
-    builder.Configuration.GetSection("SmartInventory"));
-builder.Services.AddHttpClient<FraFactu.Application.Interfaces.ISmartInventoryClient,
-    FraFactu.Infrastructure.Services.SmartInventoryClient>()
-    .AddPolicyHandler(FraFactu.Infrastructure.Http.HttpPolicies.CrossAppRetry());
-builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.IntegracionInventarioConsumer>();
-
-// F4 (Plan inventario desde DTE): job periodico que reconcilia el StockBodega
-// de Smartix contra el snapshot de SmartInventory. Inactivo si SmartInventory
-// no esta configurado o si ReconciliacionInventario:Habilitado=false.
-builder.Services.Configure<FraFactu.Application.Common.Settings.ReconciliacionInventarioSettings>(
-    builder.Configuration.GetSection("ReconciliacionInventario"));
-builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.ReconciliacionInventarioJob>();
 
 // HttpClient para integraciones con MH
 builder.Services.AddHttpClient("MinisterioHacienda", client =>

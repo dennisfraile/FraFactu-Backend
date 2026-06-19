@@ -1,6 +1,5 @@
 using System.Text.Json;
 using FraFactu.Application.DTOs.Compras;
-using FraFactu.Application.DTOs.Integraciones;
 using FraFactu.Application.Interfaces;
 using FraFactu.Domain.Entities;
 using FraFactu.Domain.Enums;
@@ -235,34 +234,7 @@ public class CompraExternaServiceEditarConfirmadaTests : IDisposable
     }
 
     [Fact]
-    public async Task ItemsCambian_SmartInventoryActiva_EncolaCorreccionPorDelta()
-    {
-        _emisor.TieneSmartInventoryActiva = true;
-        await _context.SaveChangesAsync();
-        var prod = SeedProducto(TipoInventario.Ventas, "VEN-007");
-        var compra = SeedCompraConfirmada((prod, 10m, 50m));
-        await _context.Entry(compra).Collection(c => c.Detalles).LoadAsync();
-        var dto = DtoDesde(compra, detalles: new()
-        {
-            new CrearCompraDetalleDto
-            {
-                ProductoId = prod.Id, BodegaId = _bodega.Id, Cantidad = 8m, CostoUnitario = 50m,
-                Subtotal = 400m, IVA = 52m, Total = 452m, EsParaInventario = true
-            }
-        });
-
-        await _service.EditarConfirmadaAsync(compra.Id, dto, _emisor.Id);
-
-        var job = await _context.IntegracionInventarioPendientes.SingleAsync();
-        job.MovimientoIdExterno.Should().StartWith($"compra-{compra.Id}-edit");
-        var payload = JsonSerializer.Deserialize<SmartInventoryMovimientoRequestDto>(job.PayloadJson)!;
-        payload.Items.Should().HaveCount(1);
-        payload.Items[0].ProductoIdExterno.Should().Be(prod.Id);
-        payload.Items[0].Cantidad.Should().Be(-2m);
-    }
-
-    [Fact]
-    public async Task ItemsCambian_SmartInventoryInactiva_NoEncolaPeroCorrigeStock()
+    public async Task ItemsCambian_CorrigeStockLocal()
     {
         var prod = SeedProducto(TipoInventario.Ventas, "VEN-008");
         var compra = SeedCompraConfirmada((prod, 10m, 50m));
@@ -278,7 +250,6 @@ public class CompraExternaServiceEditarConfirmadaTests : IDisposable
 
         await _service.EditarConfirmadaAsync(compra.Id, dto, _emisor.Id);
 
-        (await _context.IntegracionInventarioPendientes.AnyAsync()).Should().BeFalse();
         (await _context.StocksBodega.SingleAsync(s => s.ProductoId == prod.Id)).CantidadDisponible.Should().Be(8m);
     }
 

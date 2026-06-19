@@ -84,11 +84,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<DteRecibido> DtesRecibidos { get; set; }
     public DbSet<LecturaCorreoJob> LecturaCorreoJobs { get; set; }
 
-    // F3 (Plan inventario desde DTE): outbox que replica movimientos a SmartInventory
-    public DbSet<IntegracionInventarioPendiente> IntegracionInventarioPendientes { get; set; }
-
-    // F4 (Plan inventario desde DTE): registro de divergencias detectadas por el job de reconciliacion
-    public DbSet<DivergenciaInventario> DivergenciasInventario { get; set; }
 
     // Vendedores y Rastreo
     public DbSet<Vendedor> Vendedores { get; set; }
@@ -130,9 +125,6 @@ public class ApplicationDbContext : DbContext
 
     // Correlativos de migración desde sistemas externos
     public DbSet<CorrelativoInicial> CorrelativosIniciales { get; set; }
-
-    // Integración SmartHub
-    public DbSet<MigracionInventarioProcesada> MigracionesInventarioProcesadas { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

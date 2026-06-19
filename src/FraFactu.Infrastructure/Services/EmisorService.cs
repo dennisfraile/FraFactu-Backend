@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using FraFactu.Application.DTOs.Common;
 using FraFactu.Application.DTOs.Emisores;
-using FraFactu.Application.DTOs.Sync;
 using FraFactu.Application.Interfaces;
 using FraFactu.Domain.Entities;
 using FraFactu.Infrastructure.Persistence;
@@ -328,43 +327,6 @@ namespace FraFactu.Infrastructure.Services
             return emisor.Activo;
         }
 
-        public async Task<SyncEmisorToggleResponseDto> SetActivoByHubIdAsync(int hubId, bool activo)
-        {
-            // Buscamos por HubId (no Id local) porque SmartHub no conoce el Id
-            // interno de Smartix; usa siempre el HubId para identificar el emisor.
-            var emisor = await _context.Emisores.FirstOrDefaultAsync(e => e.HubId == hubId);
-            if (emisor == null)
-            {
-                return new SyncEmisorToggleResponseDto
-                {
-                    Encontrado = false,
-                    Cambio = false,
-                    Activo = activo
-                };
-            }
-
-            if (emisor.Activo == activo)
-            {
-                return new SyncEmisorToggleResponseDto
-                {
-                    Encontrado = true,
-                    Cambio = false,
-                    Activo = emisor.Activo,
-                    Id = emisor.Id
-                };
-            }
-
-            emisor.Activo = activo;
-            await _context.SaveChangesAsync();
-
-            return new SyncEmisorToggleResponseDto
-            {
-                Encontrado = true,
-                Cambio = true,
-                Activo = emisor.Activo,
-                Id = emisor.Id
-            };
-        }
 
         /// <summary>
         /// Plan B Hub-as-Emisor — Fase 3 Task 19.
