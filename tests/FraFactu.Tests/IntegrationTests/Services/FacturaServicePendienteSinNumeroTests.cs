@@ -53,7 +53,6 @@ public class FacturaServicePendienteSinNumeroTests
             Mock.Of<ICrossDbCorrelativoService>(),
             Mock.Of<ICorrelativoInicialService>(),
             Mock.Of<ISaldoDteService>(),
-            Mock.Of<ISmartCareWebhookService>(),
             Mock.Of<ITelemetryService>());
 
     private static void Seed(ApplicationDbContext ctx)

@@ -134,10 +134,6 @@ public class ApplicationDbContext : DbContext
     // Integración SmartHub
     public DbSet<MigracionInventarioProcesada> MigracionesInventarioProcesadas { get; set; }
 
-    // Integración SmartCare — prefills (borradores) que SmartCare deposita para
-    // que la UI de Smartix abra el wizard de factura pre-cargado.
-    public DbSet<FacturaPrefill> FacturaPrefills { get; set; }
-
     protected override void OnModelCreating(ModelBuilder builder)
     {
         // ESTA LÍNEA ES MÁGICA:

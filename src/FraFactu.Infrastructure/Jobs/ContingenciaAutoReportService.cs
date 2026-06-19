@@ -202,24 +202,6 @@ namespace FraFactu.Infrastructure.Jobs
                 }
                 await context.SaveChangesAsync(ct);
 
-                // 5.1 Notificar a SmartCare por cada factura que provenga de un
-                // prefill SmartCare — ViewUrl cambia de /facturas-pendientes a
-                // /contingencia ahora que están asociadas al evento.
-                var smartCareWebhook = scope.ServiceProvider.GetRequiredService<ISmartCareWebhookService>();
-                foreach (var f in facturas.Where(x => !string.IsNullOrEmpty(x.SmartCareCorrelationId)))
-                {
-                    try
-                    {
-                        await smartCareWebhook.NotificarCambioEstadoAsync(f);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex,
-                            "[SmartCare-Webhook] Falla al notificar asociación automática de factura {FacturaId} al evento {EventoId}.",
-                            f.Id, evento.Id);
-                    }
-                }
-
                 // 6. Construir DTO y Enviar a Hacienda
                 var eventoDto = new EventoContingenciaDto
                 {
@@ -335,26 +317,6 @@ namespace FraFactu.Infrastructure.Jobs
             await context.SaveChangesAsync(ct);
             _logger.LogWarning("[CONTINGENCIA-AUTO] {Count} facturas PENDIENTE_ENVIO marcadas como vencidas (PENDIENTE_LOTE)",
                 facturasVencidas.Count);
-
-            // Aviso a SmartCare por cada factura proveniente de un prefill SmartCare.
-            // ViewUrl no cambia funcionalmente (PENDIENTE_LOTE sin evento sigue
-            // yendo a /facturas-pendientes igual que PENDIENTE_ENVIO), pero el
-            // factura_estado sí (de 'pendiente_envio' a 'pendiente_lote'), y el
-            // badge en SmartCare pasa a "Pendiente (contingencia)".
-            var smartCareWebhook = scope.ServiceProvider.GetRequiredService<ISmartCareWebhookService>();
-            foreach (var f in facturasVencidas.Where(x => !string.IsNullOrEmpty(x.SmartCareCorrelationId)))
-            {
-                try
-                {
-                    await smartCareWebhook.NotificarCambioEstadoAsync(f);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex,
-                        "[SmartCare-Webhook] Falla al notificar vencimiento de factura {FacturaId} a SmartCare.",
-                        f.Id);
-                }
-            }
         }
 
         /// <summary>

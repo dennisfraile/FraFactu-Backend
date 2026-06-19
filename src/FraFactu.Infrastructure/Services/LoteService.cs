@@ -33,7 +33,6 @@ public class LoteService : ILoteService
     private readonly IInventarioIntegrationService _inventarioService;
     private readonly IEmailService _emailService;
     private readonly IEncryptionService _encryptionService;
-    private readonly ISmartCareWebhookService _smartCareWebhook;
 
     public LoteService(
         ApplicationDbContext context,
@@ -46,8 +45,7 @@ public class LoteService : ILoteService
         IHaciendaAuthService authService,
         IInventarioIntegrationService inventarioService,
         IEmailService emailService,
-        IEncryptionService encryptionService,
-        ISmartCareWebhookService smartCareWebhook)
+        IEncryptionService encryptionService)
     {
         _context = context;
         _logger = logger;
@@ -60,33 +58,6 @@ public class LoteService : ILoteService
         _inventarioService = inventarioService;
         _emailService = emailService;
         _encryptionService = encryptionService;
-        _smartCareWebhook = smartCareWebhook;
-    }
-
-    // Tras procesar un lote, dispara webhook a SmartCare por cada factura
-    // (a) que provenga de un prefill SmartCare (SmartCareCorrelationId != null), y
-    // (b) cuyo estado quedó en PROCESADO o RECHAZADO tras el envio.
-    // Fire-and-forget por detalle: una excepcion en uno no aborta los demás ni el flujo del lote.
-    private async Task NotificarSmartCareDeLoteAsync(Lote lote)
-    {
-        foreach (var detalle in lote.Detalles)
-        {
-            var factura = detalle.FacturaElectronica;
-            if (factura == null) continue;
-            if (string.IsNullOrEmpty(factura.SmartCareCorrelationId)) continue;
-            if (factura.EstadoHacienda is not "PROCESADO" and not "RECHAZADO") continue;
-
-            try
-            {
-                await _smartCareWebhook.NotificarCambioEstadoAsync(factura);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex,
-                    "[SmartCare-Webhook] Falla al notificar resultado de lote {LoteId} para factura {FacturaId} (CorrelationId={Cid}). El boton 'Ver en Smartix' en SmartCare puede quedar apuntando al estado anterior hasta el siguiente cambio.",
-                    lote.Id, factura.Id, factura.SmartCareCorrelationId);
-            }
-        }
     }
 
     private string DecryptField(string? value, string fieldName, bool optional = false)
@@ -598,7 +569,6 @@ public class LoteService : ILoteService
                 lote.FechaUltimaConsulta = DateTime.UtcNow;
                 lote.FechaModificacion = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
-                await NotificarSmartCareDeLoteAsync(lote);
                 return await ObtenerLoteAsync(loteId);
             }
 
@@ -744,7 +714,6 @@ public class LoteService : ILoteService
             await ReenviarEnNuevoLoteAsync(lote.EmisorId, facturasParaNuevoLote, lote.EsContingencia, lote.EventoContingenciaId);
         }
 
-        await NotificarSmartCareDeLoteAsync(lote);
         return await ObtenerLoteAsync(loteId);
     }
 

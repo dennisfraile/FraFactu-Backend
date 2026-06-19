@@ -317,16 +317,6 @@ builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.HubRoleRegistrati
 // Webhooks Hub→Smartix de gestión de usuarios (Fase 2 centralización).
 builder.Services.AddScoped<IHubUsuarioSyncService, FraFactu.Infrastructure.Services.HubUsuarioSyncService>();
 
-// Integración SmartCare (incoming invoices + outgoing webhook)
-builder.Services.Configure<FraFactu.Application.Common.Settings.SmartCareSettings>(
-    builder.Configuration.GetSection("SmartCare"));
-builder.Services.AddScoped<FraFactu.Application.Interfaces.IFromSmartCarePrefillService,
-    FraFactu.Infrastructure.Services.FromSmartCarePrefillService>();
-builder.Services.AddHttpClient<FraFactu.Application.Interfaces.ISmartCareWebhookService,
-    FraFactu.Infrastructure.Services.SmartCareWebhookService>()
-    .AddHttpMessageHandler<CorrelationIdHandler>()
-    .AddPolicyHandler(FraFactu.Infrastructure.Http.HttpPolicies.CrossAppRetry());
-
 // Background Jobs - Envío automático de lotes
 builder.Services.AddScoped<FraFactu.Infrastructure.Jobs.EnvioAutomaticoLotesJob>();
 builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.EnvioAutomaticoBackgroundService>();

@@ -34,7 +34,6 @@ namespace FraFactu.Infrastructure.Services
         private readonly ICrossDbCorrelativoService _crossDbService;
         private readonly ICorrelativoInicialService _correlativoInicialService;
         private readonly ISaldoDteService _saldoDteService;
-        private readonly ISmartCareWebhookService _smartCareWebhook;
         private readonly ITelemetryService _telemetry;
 
         public FacturaService(
@@ -51,7 +50,6 @@ namespace FraFactu.Infrastructure.Services
             ICrossDbCorrelativoService crossDbService,
             ICorrelativoInicialService correlativoInicialService,
             ISaldoDteService saldoDteService,
-            ISmartCareWebhookService smartCareWebhook,
             ITelemetryService telemetry)
         {
             _context = context;
@@ -67,7 +65,6 @@ namespace FraFactu.Infrastructure.Services
             _crossDbService = crossDbService;
             _correlativoInicialService = correlativoInicialService;
             _saldoDteService = saldoDteService;
-            _smartCareWebhook = smartCareWebhook;
             _telemetry = telemetry;
         }
 
@@ -924,25 +921,6 @@ namespace FraFactu.Infrastructure.Services
                         exComm.Data["FacturaId"] = factura.Id;
                         throw exComm;
                     }
-                }
-            }
-
-            // 14.5. Notificar a SmartCare por webhook si la factura proviene de un
-            // prefill SmartCare (tiene CorrelationId + WebhookUrl persistidos por
-            // el consume del prefill). Fire-and-forget; no rompe la respuesta al
-            // wizard si el webhook falla.
-            if (!string.IsNullOrEmpty(factura.SmartCareCorrelationId)
-                && (factura.EstadoHacienda == "PROCESADO" || factura.EstadoHacienda == "RECHAZADO"))
-            {
-                try
-                {
-                    await _smartCareWebhook.NotificarCambioEstadoAsync(factura);
-                }
-                catch (Exception exWebhook)
-                {
-                    _logger.LogWarning(exWebhook,
-                        "[SmartCare-Webhook] Falla al notificar emision de factura {Id} a SmartCare (CorrelationId={Cid}). El estado en SmartCare puede quedar desfasado hasta el siguiente polling.",
-                        factura.Id, factura.SmartCareCorrelationId);
                 }
             }
 
@@ -2035,14 +2013,6 @@ namespace FraFactu.Infrastructure.Services
                     }
                 }
             }
-
-            // Notificar a SmartCare si la factura proviene de una solicitud suya (fire-and-forget).
-            // Incluye PENDIENTE_ENVIO/PENDIENTE_LOTE para cubrir el caso del modal
-            // "Guardar como pendiente" tras un rechazo: el wizard llama este endpoint para
-            // pasar la factura a PENDIENTE_ENVIO, y SmartCare debe enterarse para sacar la
-            // visita de "Procesando" (antes solo se notificaba PROCESADO/RECHAZADO).
-            if (estado is "PROCESADO" or "RECHAZADO" or "PENDIENTE_ENVIO" or "PENDIENTE_LOTE")
-                await _smartCareWebhook.NotificarCambioEstadoAsync(factura);
 
             return true;
         }
@@ -3726,24 +3696,6 @@ namespace FraFactu.Infrastructure.Services
 
                         await _context.SaveChangesAsync();
 
-                        // Notificar a SmartCare: la factura quedó en PENDIENTE_LOTE
-                        // (y posiblemente asociada a un evento automático). El
-                        // ViewUrl va a /contingencia si se asoció evento, o a
-                        // /facturas-pendientes si la asociación falló.
-                        if (!string.IsNullOrEmpty(factura.SmartCareCorrelationId))
-                        {
-                            try
-                            {
-                                await _smartCareWebhook.NotificarCambioEstadoAsync(factura);
-                            }
-                            catch (Exception exWebhook)
-                            {
-                                _logger.LogWarning(exWebhook,
-                                    "[SmartCare-Webhook] Falla al notificar entrada en contingencia automática de factura {FacturaId}.",
-                                    factura.Id);
-                            }
-                        }
-
                         break;
                     }
                     else if (resultado.Exitoso)
@@ -3758,7 +3710,6 @@ namespace FraFactu.Infrastructure.Services
                             factura.Observaciones = "MH respondió PROCESADO pero no devolvió sello de recepción";
                             await SincronizarLoteDetalleAsync(factura, factura.Observaciones);
                             await _context.SaveChangesAsync();
-                            await TryNotificarSmartCareAsync(factura, "envio-individual:rechazado-sin-sello");
                             break;
                         }
 
@@ -3777,7 +3728,6 @@ namespace FraFactu.Infrastructure.Services
                         factura.HoraTransmision = DateTime.UtcNow.TimeOfDay;
                         await SincronizarLoteDetalleAsync(factura);
                         await _context.SaveChangesAsync();
-                        await TryNotificarSmartCareAsync(factura, "envio-individual:procesado");
 
                         await IntentarEnviarEmailDteAsync(factura.Id, factura.ReceptorId == 0 ? null : (int?)factura.ReceptorId);
                         break;
@@ -3806,7 +3756,6 @@ namespace FraFactu.Infrastructure.Services
                         factura.Observaciones = motivo;
                         await SincronizarLoteDetalleAsync(factura, motivo);
                         await _context.SaveChangesAsync();
-                        await TryNotificarSmartCareAsync(factura, "envio-individual:rechazado");
 
                         throw new InvalidOperationException($"Factura rechazada o fallida: {motivo}");
                     }
@@ -3818,7 +3767,6 @@ namespace FraFactu.Infrastructure.Services
                     factura.EstadoHacienda = "ERROR";
                     factura.Observaciones = $"Error al enviar a MH: {ex.Message}";
                     await _context.SaveChangesAsync();
-                    await TryNotificarSmartCareAsync(factura, "envio-individual:error");
 
                     throw new InvalidOperationException($"Error al comunicarse con Ministerio de Hacienda: {ex.Message}", ex);
                 }
@@ -4131,24 +4079,6 @@ namespace FraFactu.Infrastructure.Services
             return resultado;
         }
 
-        // Wrapper fire-and-forget para notificar webhook a SmartCare. Centraliza
-        // el null-check de SmartCareCorrelationId y el try/catch para no llenar
-        // los call-sites en EnviarFacturaIndividualAsync (que tiene 4 paths que
-        // dejan la factura en un estado final tras hablar con MH).
-        private async Task TryNotificarSmartCareAsync(FacturaElectronica factura, string contexto)
-        {
-            if (string.IsNullOrEmpty(factura.SmartCareCorrelationId)) return;
-            try
-            {
-                await _smartCareWebhook.NotificarCambioEstadoAsync(factura);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex,
-                    "[SmartCare-Webhook] Falla al notificar a SmartCare (contexto={Contexto}) para factura {FacturaId}.",
-                    contexto, factura.Id);
-            }
-        }
 
         public async Task DescartarFacturaRechazadaAsync(int facturaId, int emisorId)
         {
@@ -4160,25 +4090,6 @@ namespace FraFactu.Infrastructure.Services
 
             if (factura.EstadoHacienda != "RECHAZADO" && factura.EstadoHacienda != "ERROR")
                 throw new InvalidOperationException("Solo se pueden descartar facturas en estado RECHAZADO o ERROR");
-
-            // Bug "descartar 400 por FK prefill" (2026-05-29): el Bug #2 fix (PR #101 de hoy
-            // AM) hizo que el prefill se consuma incluso cuando MH rechaza la emision, para
-            // que SmartCare se entere de la factura PENDIENTE_ENVIO. Eso introdujo una FK
-            // RESTRICT en `FacturaPrefills.ConsumedFacturaId` que rompe este delete. Antes
-            // del PR #101 el prefill no se consumia en el catch y por eso el Remove
-            // funcionaba directo.
-            //
-            // Liberamos el prefill aqui (ConsumedFacturaId=null + ConsumedAt=null) antes de
-            // borrar la factura. El prefill queda disponible para que el user pueda re-emitir
-            // desde el mismo wizard (?prefillId=N) sin tener que pedirle a SmartCare uno nuevo.
-            var prefillsConsumidos = await _context.FacturaPrefills
-                .Where(p => p.ConsumedFacturaId == facturaId)
-                .ToListAsync();
-            foreach (var prefill in prefillsConsumidos)
-            {
-                prefill.ConsumedFacturaId = null;
-                prefill.ConsumedAt = null;
-            }
 
             // Otras FKs con RESTRICT que bloquearian el delete: pre-chequear y dar mensaje
             // claro en vez del DATABASE_ERROR generico del middleware global.
