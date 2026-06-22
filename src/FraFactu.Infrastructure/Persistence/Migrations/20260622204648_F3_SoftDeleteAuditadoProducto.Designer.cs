@@ -3,17 +3,20 @@ using System;
 using FraFactu.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FraFactu.Infrastructure.Migrations
+namespace FraFactu.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260622204648_F3_SoftDeleteAuditadoProducto")]
+    partial class F3_SoftDeleteAuditadoProducto
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -14519,9 +14522,6 @@ namespace FraFactu.Infrastructure.Migrations
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("FechaUltimaDevaluacion")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int?>("MarcaId")
                         .HasColumnType("integer");
 
@@ -14538,10 +14538,6 @@ namespace FraFactu.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
-
-                    b.Property<decimal?>("PorcentajeDevaluacionAnual")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)");
 
                     b.Property<decimal?>("PorcentajeIVA")
                         .HasPrecision(5, 2)

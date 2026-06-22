@@ -304,6 +304,9 @@ builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.SuscripcionRemind
 // Background Job - Recordatorios de cuotas (vencidas / por vencer)
 builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.RecordatorioCuotasBackgroundService>();
 
+// Background Job - Devaluación anual de mobiliario/equipo (F3 G1)
+builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.DevaluacionAnualBackgroundService>();
+
 // HttpClient para integraciones con MH
 builder.Services.AddHttpClient("MinisterioHacienda", client =>
 {
