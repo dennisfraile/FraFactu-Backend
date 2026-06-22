@@ -122,6 +122,12 @@ public interface IInventarioReporteService
     /// </summary>
     Task<List<RotacionProductoDto>> ObtenerRotacionInventarioAsync(int emisorId, int meses = 12, int? sucursalId = null, int? bodegaId = null);
 
+    /// <summary>
+    /// Rotación ABC: clasifica los productos por valor vendido acumulado en un
+    /// período (A ≤ 80%, B ≤ 95%, C > 95%). F3 (G3).
+    /// </summary>
+    Task<List<RotacionAbcItemDto>> ObtenerRotacionAbcAsync(int emisorId, DateTime desde, DateTime hasta, int? sucursalId = null, int? bodegaId = null);
+
     // DASHBOARDS
     /// <summary>
     /// Obtener KPIs principales del inventario

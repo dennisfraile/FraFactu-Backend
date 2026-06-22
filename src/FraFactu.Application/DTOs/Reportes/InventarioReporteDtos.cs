@@ -152,6 +152,20 @@ public class RotacionProductoDto
 }
 
 /// <summary>
+/// Ítem de rotación ABC: clasificación por valor vendido acumulado (F3 G3).
+/// </summary>
+public class RotacionAbcItemDto
+{
+    public int ProductoId { get; set; }
+    public string ProductoCodigo { get; set; } = string.Empty;
+    public string ProductoNombre { get; set; } = string.Empty;
+    public decimal UnidadesVendidas { get; set; }
+    public decimal ValorVendido { get; set; }
+    public decimal PorcentajeAcumulado { get; set; }
+    public string Clasificacion { get; set; } = string.Empty; // A, B, C
+}
+
+/// <summary>
 /// KPIs del inventario
 /// </summary>
 public class InventarioKPIsDto

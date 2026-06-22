@@ -342,6 +342,26 @@ public class InventarioReportesController : ControllerBase
     }
 
     /// <summary>
+    /// Rotación ABC: clasifica productos por valor vendido acumulado en un período (F3 G3)
+    /// </summary>
+    [HttpGet("rotacion-abc")]
+    [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Contador,Auditor")]
+    public async Task<ActionResult> GetRotacionAbc(
+        [FromQuery] DateTime desde,
+        [FromQuery] DateTime hasta,
+        [FromQuery] int? sucursalId = null,
+        [FromQuery] int? bodegaId = null)
+    {
+        var emisorId = GetEmisorId();
+        var (sucursalIdFinal, _, error) = ResolverSucursal(sucursalId);
+        if (error != null) return error;
+
+        var resultado = await _reporteService.ObtenerRotacionAbcAsync(
+            emisorId, desde, hasta, sucursalIdFinal, bodegaId);
+        return Ok(resultado);
+    }
+
+    /// <summary>
     /// KPIs principales del inventario (dashboard)
     /// </summary>
     [HttpGet("kpis")]
