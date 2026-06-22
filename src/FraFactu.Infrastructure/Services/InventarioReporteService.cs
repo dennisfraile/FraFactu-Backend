@@ -488,6 +488,84 @@ public class InventarioReporteService : IInventarioReporteService
         return total ?? 0;
     }
 
+    public async Task<List<RotacionAbcItemDto>> ObtenerRotacionAbcAsync(int emisorId, DateTime desde, DateTime hasta, int? sucursalId = null, int? bodegaId = null)
+    {
+        var query = _context.MovimientosInventario
+            .Include(m => m.Producto)
+            .Include(m => m.Bodega)
+                .ThenInclude(b => b.Sucursal)
+            .Where(m => m.Bodega!.Sucursal!.EmisorId == emisorId)
+            .Where(m => m.TipoMovimiento == "SALIDA")
+            .Where(m => m.FechaMovimiento >= desde && m.FechaMovimiento <= hasta);
+
+        List<int>? bodegaIds = null;
+        if (sucursalId.HasValue)
+        {
+            bodegaIds = await _context.Bodegas
+                .Where(b => b.SucursalId == sucursalId.Value)
+                .Select(b => b.Id)
+                .ToListAsync();
+        }
+        else if (bodegaId.HasValue)
+        {
+            bodegaIds = new List<int> { bodegaId.Value };
+        }
+
+        if (bodegaIds != null && bodegaIds.Any())
+        {
+            query = query.Where(m => bodegaIds.Contains(m.BodegaId));
+        }
+
+        var movimientos = await query
+            .Select(m => new
+            {
+                m.ProductoId,
+                m.Producto!.Codigo,
+                m.Producto.Nombre,
+                m.Producto.PrecioVenta,
+                m.Cantidad
+            })
+            .ToListAsync();
+
+        var agrupados = movimientos
+            .GroupBy(m => new { m.ProductoId, m.Codigo, m.Nombre, m.PrecioVenta })
+            .Select(g => new
+            {
+                g.Key.ProductoId,
+                g.Key.Codigo,
+                g.Key.Nombre,
+                Unidades = g.Sum(x => Math.Abs(x.Cantidad)),
+                Valor = g.Sum(x => Math.Abs(x.Cantidad) * g.Key.PrecioVenta)
+            })
+            .OrderByDescending(x => x.Valor)
+            .ToList();
+
+        var result = new List<RotacionAbcItemDto>();
+        var totalValor = agrupados.Sum(x => x.Valor);
+        if (totalValor == 0) return result;
+
+        decimal acumulado = 0;
+        foreach (var item in agrupados)
+        {
+            acumulado += item.Valor;
+            var porcentaje = Math.Round((acumulado / totalValor) * 100, 2);
+            var clasificacion = porcentaje <= 80 ? "A" : porcentaje <= 95 ? "B" : "C";
+
+            result.Add(new RotacionAbcItemDto
+            {
+                ProductoId = item.ProductoId,
+                ProductoCodigo = item.Codigo,
+                ProductoNombre = item.Nombre,
+                UnidadesVendidas = item.Unidades,
+                ValorVendido = item.Valor,
+                PorcentajeAcumulado = porcentaje,
+                Clasificacion = clasificacion
+            });
+        }
+
+        return result;
+    }
+
     public async Task<List<RotacionProductoDto>> ObtenerRotacionInventarioAsync(int emisorId, int meses = 12, int? sucursalId = null, int? bodegaId = null)
     {
         // ⚡ Raw SQL necesario - window functions y cálculos complejos

@@ -3,17 +3,20 @@ using System;
 using FraFactu.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FraFactu.Infrastructure.Migrations
+namespace FraFactu.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260622204648_F3_SoftDeleteAuditadoProducto")]
+    partial class F3_SoftDeleteAuditadoProducto
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -14002,44 +14005,6 @@ namespace FraFactu.Infrastructure.Migrations
                     b.ToTable("MedicosServicios", (string)null);
                 });
 
-            modelBuilder.Entity("FraFactu.Domain.Entities.MovimientoExternoRegistrado", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("EmisorId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ItemsProcesados")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("MovimientoIdExterno")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("TipoDocumento")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmisorId", "MovimientoIdExterno")
-                        .IsUnique()
-                        .HasDatabaseName("IX_MovimientoExterno_Emisor_IdExterno");
-
-                    b.ToTable("movimientos_externos_registrados", (string)null);
-                });
-
             modelBuilder.Entity("FraFactu.Domain.Entities.MovimientoInventario", b =>
                 {
                     b.Property<int>("Id")
@@ -14557,9 +14522,6 @@ namespace FraFactu.Infrastructure.Migrations
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("FechaUltimaDevaluacion")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int?>("MarcaId")
                         .HasColumnType("integer");
 
@@ -14576,10 +14538,6 @@ namespace FraFactu.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
-
-                    b.Property<decimal?>("PorcentajeDevaluacionAnual")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)");
 
                     b.Property<decimal?>("PorcentajeIVA")
                         .HasPrecision(5, 2)

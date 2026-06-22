@@ -29,9 +29,14 @@ namespace FraFactu.Application.Interfaces
         Task<ProductoServicioDto> UpdateAsync(int id, UpdateProductoServicioDto dto, int emisorId);
 
         /// <summary>
-        /// Activa/Desactiva un producto
+        /// Activa/Desactiva un producto. La reactivación limpia la auditoría de baja.
         /// </summary>
         Task<bool> ToggleActiveAsync(int id, int emisorId);
+
+        /// <summary>
+        /// Da de baja (soft-delete) un producto registrando motivo, quién y cuándo.
+        /// </summary>
+        Task DesactivarAsync(int id, int emisorId, DesactivarProductoServicioDto dto, int? usuarioId);
 
         /// <summary>
         /// Busca productos por código o nombre

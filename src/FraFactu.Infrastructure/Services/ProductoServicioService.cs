@@ -375,9 +375,42 @@ namespace FraFactu.Infrastructure.Services
             }
 
             productoServicio.Activo = !productoServicio.Activo;
+
+            // Al reactivar, limpiar la auditoría de baja (F3 G2).
+            if (productoServicio.Activo)
+            {
+                productoServicio.MotivoDesactivacion = null;
+                productoServicio.DesactivadoPorUsuarioId = null;
+                productoServicio.DesactivadoEn = null;
+            }
+
             await _context.SaveChangesAsync();
 
             return productoServicio.Activo;
+        }
+
+        public async Task DesactivarAsync(int id, int emisorId, DesactivarProductoServicioDto dto, int? usuarioId)
+        {
+            if (string.IsNullOrWhiteSpace(dto?.Motivo))
+            {
+                throw new ArgumentException("El motivo de la baja es obligatorio.", nameof(dto));
+            }
+
+            var productoServicio = await _context.ProductosServicios
+                .Where(p => p.Id == id && p.EmisorId == emisorId)
+                .FirstOrDefaultAsync();
+
+            if (productoServicio == null)
+            {
+                throw new KeyNotFoundException($"Producto/Servicio con ID {id} no encontrado");
+            }
+
+            productoServicio.Activo = false;
+            productoServicio.MotivoDesactivacion = dto.Motivo.Trim();
+            productoServicio.DesactivadoPorUsuarioId = usuarioId;
+            productoServicio.DesactivadoEn = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
         }
 
 

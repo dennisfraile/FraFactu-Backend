@@ -244,6 +244,7 @@ builder.Services.AddScoped<ITipoGastoService, FraFactu.Infrastructure.Services.T
 // Servicios de Integración Inventario
 builder.Services.AddScoped<IInventarioIntegrationService, FraFactu.Infrastructure.Services.InventarioIntegrationService>();
 builder.Services.AddScoped<IInventarioReporteService, FraFactu.Infrastructure.Services.InventarioReporteService>();
+builder.Services.AddScoped<IIdempotenciaMovimientosService, FraFactu.Infrastructure.Services.IdempotenciaMovimientosService>();
 
 // Servicio de Correlativos Iniciales (migración desde otros sistemas)
 builder.Services.AddScoped<FraFactu.Application.Interfaces.ICorrelativoInicialService, FraFactu.Infrastructure.Services.CorrelativoInicialService>();
@@ -303,6 +304,9 @@ builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.SuscripcionRemind
 
 // Background Job - Recordatorios de cuotas (vencidas / por vencer)
 builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.RecordatorioCuotasBackgroundService>();
+
+// Background Job - Devaluación anual de mobiliario/equipo (F3 G1)
+builder.Services.AddHostedService<FraFactu.Infrastructure.Jobs.DevaluacionAnualBackgroundService>();
 
 // HttpClient para integraciones con MH
 builder.Services.AddHttpClient("MinisterioHacienda", client =>

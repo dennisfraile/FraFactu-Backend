@@ -108,6 +108,12 @@ namespace FraFactu.Infrastructure.Persistence.Configurations
             builder.Property(p => p.ValorActual).HasPrecision(18, 2);
             builder.Property(p => p.ValorResidual).HasPrecision(18, 2);
 
+            // F3 (G1): porcentaje anual de devaluación de mobiliario.
+            builder.Property(p => p.PorcentajeDevaluacionAnual).HasPrecision(5, 2);
+
+            // F3 (G2): soft-delete auditado.
+            builder.Property(p => p.MotivoDesactivacion).HasMaxLength(500);
+
             // Relaciones Nuevas (Opcionales)
             builder.HasOne(p => p.Categoria)
                 .WithMany(c => c.Productos)

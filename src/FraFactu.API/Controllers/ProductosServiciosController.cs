@@ -157,5 +157,32 @@ namespace FraFactu.API.Controllers
                 return NotFound(new { message = $"Producto/Servicio con ID {id} no encontrado" });
             }
         }
+
+        /// <summary>
+        /// Da de baja (soft-delete) un producto/servicio registrando el motivo.
+        /// </summary>
+        [HttpPost("{id}/desactivar")]
+        [Authorize(Roles = "EmisorAdmin,GerenteSucursal")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> Desactivar(int id, [FromBody] DesactivarProductoServicioDto dto)
+        {
+            try
+            {
+                var emisorId = User.GetEmisorId();
+                var usuarioId = User.GetUserId();
+                await _service.DesactivarAsync(id, emisorId, dto, usuarioId);
+                return Ok(new { id, activo = false });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new { message = $"Producto/Servicio con ID {id} no encontrado" });
+            }
+        }
     }
 }

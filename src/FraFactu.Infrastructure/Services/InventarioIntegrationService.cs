@@ -613,6 +613,22 @@ public class InventarioIntegrationService : IInventarioIntegrationService
 
         try
         {
+            // Bloquear la fila de la factura para serializar operaciones concurrentes sobre la misma factura
+            await BloquearFacturaAsync(facturaId);
+
+            // Verificar idempotencia: si ya existen movimientos para esta factura, no duplicar (F3 G4)
+            var yaExistenMovimientos = await _context.MovimientosInventario
+                .AnyAsync(m => m.TipoDocumento == "FACTURA_EMITIDA" && m.DocumentoId == facturaId);
+
+            if (yaExistenMovimientos)
+            {
+                _logger.LogDebug("[INVENTARIO-DESCUENTO-DIRECTO] Ya existen movimientos para factura {FacturaId}, omitiendo", facturaId);
+
+                if (transaction != null)
+                    await transaction.CommitAsync();
+                return;
+            }
+
             var factura = await _context.Facturas
                 .Include(f => f.Detalles)
                 .FirstOrDefaultAsync(f => f.Id == facturaId);
