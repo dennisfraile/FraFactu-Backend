@@ -244,6 +244,7 @@ builder.Services.AddScoped<ITipoGastoService, FraFactu.Infrastructure.Services.T
 // Servicios de Integración Inventario
 builder.Services.AddScoped<IInventarioIntegrationService, FraFactu.Infrastructure.Services.InventarioIntegrationService>();
 builder.Services.AddScoped<IInventarioReporteService, FraFactu.Infrastructure.Services.InventarioReporteService>();
+builder.Services.AddScoped<IIdempotenciaMovimientosService, FraFactu.Infrastructure.Services.IdempotenciaMovimientosService>();
 
 // Servicio de Correlativos Iniciales (migración desde otros sistemas)
 builder.Services.AddScoped<FraFactu.Application.Interfaces.ICorrelativoInicialService, FraFactu.Infrastructure.Services.CorrelativoInicialService>();

@@ -72,6 +72,7 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<StockBodega> StocksBodega { get; set; }
     public DbSet<MovimientoInventario> MovimientosInventario { get; set; }
+    public DbSet<MovimientoExternoRegistrado> MovimientosExternosRegistrados { get; set; }
 
     // Compras y Gastos
     public DbSet<CatTipoGasto> CatTiposGasto { get; set; }
