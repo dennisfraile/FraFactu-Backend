@@ -46,6 +46,11 @@ public class FacturacionCuotaStrategy : IFacturacionCuotaStrategy
         decimal baseGravada = decimal.Round(montoCuota / (1 + TasaIva), 2);
         decimal iva = montoCuota - baseGravada;
 
+        // UniMedida es el Id del catálogo cat_uni_medida (FK), NO el código MH. Reutilizamos
+        // la unidad del primer ítem de la venta (un Id válido ya resuelto por el frontend) para
+        // las líneas sintéticas de la cuota; usar un literal como 99 viola la FK CatUnidadMedidaId.
+        int uniMedidaId = UnidadDeVenta(venta);
+
         var dte = ClonarCabecera(venta);
         dte.CuerpoDocumento = new List<ItemDocumentoDto>
         {
@@ -54,7 +59,7 @@ public class FacturacionCuotaStrategy : IFacturacionCuotaStrategy
                 NumItem = 1,
                 TipoItem = 2, // Servicio (pago a cuenta)
                 Cantidad = 1,
-                UniMedida = 99, // Otra
+                UniMedida = uniMedidaId,
                 Descripcion = $"Cuota {numero}/{total} - venta a credito",
                 PrecioUni = baseGravada,
                 VentaGravada = baseGravada,
@@ -62,7 +67,7 @@ public class FacturacionCuotaStrategy : IFacturacionCuotaStrategy
             }
         };
 
-        AgregarLineaMoraYResumen(dte, baseGravada, 0m, montoCuota, interesMora, catFormaPagoId, referencia);
+        AgregarLineaMoraYResumen(dte, baseGravada, 0m, montoCuota, interesMora, catFormaPagoId, referencia, uniMedidaId);
         return dte;
     }
 
@@ -83,13 +88,18 @@ public class FacturacionCuotaStrategy : IFacturacionCuotaStrategy
         // El descuento lleva de la bruta total a la neta de esta cuota final.
         decimal descuento = decimal.Round(gravadaBruta - gravadaNeta, 2);
 
-        AgregarLineaMoraYResumen(dte, gravadaNeta, descuento, montoCuota, interesMora, catFormaPagoId, referencia);
+        AgregarLineaMoraYResumen(dte, gravadaNeta, descuento, montoCuota, interesMora, catFormaPagoId, referencia, UnidadDeVenta(venta));
         return dte;
     }
 
+    // Id de catálogo cat_uni_medida a usar en las líneas sintéticas (cuota/mora): se toma del
+    // primer ítem de la venta, que el frontend ya resolvió a un Id válido de la FK.
+    private static int UnidadDeVenta(CreateFacturaElectronicaDto venta) =>
+        venta.CuerpoDocumento[0].UniMedida;
+
     private static void AgregarLineaMoraYResumen(
         CreateFacturaElectronicaDto dte, decimal gravadaNetaBase, decimal descuento,
-        decimal montoCuota, decimal interesMora, int catFormaPagoId, string? referencia)
+        decimal montoCuota, decimal interesMora, int catFormaPagoId, string? referencia, int uniMedidaId)
     {
         decimal gravadaTotal = gravadaNetaBase;
         decimal totalPagar = montoCuota;
@@ -104,7 +114,7 @@ public class FacturacionCuotaStrategy : IFacturacionCuotaStrategy
                 NumItem = numItem,
                 TipoItem = 2,
                 Cantidad = 1,
-                UniMedida = 99,
+                UniMedida = uniMedidaId,
                 Descripcion = "Interés por mora",
                 PrecioUni = baseMora,
                 VentaGravada = baseMora,
