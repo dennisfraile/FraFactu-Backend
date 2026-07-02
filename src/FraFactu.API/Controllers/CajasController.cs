@@ -20,7 +20,7 @@ public class CajasController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
+    [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
     public async Task<ActionResult<List<CajaDto>>> GetAll([FromQuery] int? sucursalId, [FromQuery] bool? soloActivos)
     {
         var emisorId = User.GetEmisorId();
@@ -60,7 +60,7 @@ public class CajasController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
+    [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
     public async Task<ActionResult<CajaDto>> GetById(int id)
     {
         var caja = await _cajaService.GetByIdAsync(id);
