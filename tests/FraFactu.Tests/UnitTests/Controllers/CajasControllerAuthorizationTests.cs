@@ -35,10 +35,12 @@ public class CajasControllerAuthorizationTests
         RolesDe(metodo).Should().Contain("SuperAdmin");
     }
 
-    [Fact]
-    public void GetAll_DeclaraElSetDeLecturaEsperado()
+    [Theory]
+    [InlineData("GetAll")]
+    [InlineData("GetById")]
+    public void LosGet_DeclaranElSetDeLecturaEsperado(string metodo)
     {
-        RolesDe("GetAll").Should().BeEquivalentTo(new[]
+        RolesDe(metodo).Should().BeEquivalentTo(new[]
         {
             "SuperAdmin", "EmisorAdmin", "GerenteSucursal", "Cajero", "Auditor", "Contador"
         });
