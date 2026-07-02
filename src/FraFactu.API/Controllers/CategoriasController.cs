@@ -32,7 +32,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene una categoría por su ID
         /// </summary>
         [HttpGet("{id}")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> GetById(int id)
@@ -63,7 +63,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene todas las categorías con paginación, búsqueda y ordenamiento
         /// </summary>
         [HttpGet]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
         [ProducesResponseType(typeof(PaginatedResponse<CategoriaDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult> GetAll(
             [FromQuery] PaginatedRequest request,

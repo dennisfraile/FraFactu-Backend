@@ -20,7 +20,7 @@ public class VendedoresController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
+    [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
     public async Task<ActionResult<List<VendedorDto>>> GetAll([FromQuery] bool activeOnly = true, [FromQuery] int? sucursalId = null)
     {
         var emisorId = User.GetEmisorId();
@@ -57,7 +57,7 @@ public class VendedoresController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
+    [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
     public async Task<ActionResult<VendedorDto>> GetById(int id)
     {
         var vendedor = await _vendedorService.GetByIdAsync(id);

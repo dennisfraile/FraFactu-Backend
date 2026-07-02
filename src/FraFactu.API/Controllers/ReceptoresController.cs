@@ -27,7 +27,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene un receptor por su ID
         /// </summary>
         [HttpGet("{id}")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
         [ProducesResponseType(typeof(ReceptorDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ReceptorDto>> GetById(int id)
@@ -45,7 +45,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene todos los receptores del emisor (paginado)
         /// </summary>
         [HttpGet]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
         [ProducesResponseType(typeof(PaginatedResponse<ReceptorListDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginatedResponse<ReceptorListDto>>> GetAll(
             [FromQuery] PaginatedRequest request,
@@ -66,7 +66,7 @@ namespace FraFactu.API.Controllers
         /// Busca receptores por término de búsqueda (nombre o documento)
         /// </summary>
         [HttpGet("search")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
         [ProducesResponseType(typeof(List<ReceptorListDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<List<ReceptorListDto>>> Search(
             [FromQuery] string searchTerm,

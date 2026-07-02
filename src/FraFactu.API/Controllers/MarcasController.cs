@@ -32,7 +32,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene una marca por su ID
         /// </summary>
         [HttpGet("{id}")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> GetById(int id)
@@ -58,7 +58,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene todas las marcas con paginación, búsqueda y ordenamiento
         /// </summary>
         [HttpGet]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
         [ProducesResponseType(typeof(PaginatedResponse<MarcaDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult> GetAll(
             [FromQuery] PaginatedRequest request,

@@ -27,7 +27,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene un producto/servicio por su ID
         /// </summary>
         [HttpGet("{id}")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Contador,Auditor")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Contador,Auditor")]
         [ProducesResponseType(typeof(ProductoServicioDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ProductoServicioDto>> GetById(int id)
@@ -45,7 +45,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene todos los productos/servicios del emisor (paginado)
         /// </summary>
         [HttpGet]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Contador,Auditor")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Contador,Auditor")]
         [ProducesResponseType(typeof(PaginatedResponse<ProductoServicioListDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginatedResponse<ProductoServicioListDto>>> GetAll(
             [FromQuery] PaginatedRequest request,
@@ -65,7 +65,7 @@ namespace FraFactu.API.Controllers
         /// Busca productos/servicios por término de búsqueda
         /// </summary>
         [HttpGet("search")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Contador,Auditor")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Contador,Auditor")]
         [ProducesResponseType(typeof(List<ProductoServicioListDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<List<ProductoServicioListDto>>> Search(
             [FromQuery] string searchTerm,

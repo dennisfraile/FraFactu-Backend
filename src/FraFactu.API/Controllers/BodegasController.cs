@@ -40,7 +40,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene una bodega por su ID
         /// </summary>
         [HttpGet("{id}")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> GetById(int id)
@@ -72,7 +72,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene todas las bodegas (con filtro opcional soloActivas)
         /// </summary>
         [HttpGet]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> GetAll([FromQuery] bool? soloActivas = null)
         {
@@ -122,7 +122,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene todas las bodegas activas del emisor sin restricción de rol
         /// </summary>
         [HttpGet("todas-activas")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> GetAllActivas()
         {
@@ -153,7 +153,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene las bodegas de una sucursal específica
         /// </summary>
         [HttpGet("sucursal/{sucursalId}")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> GetBySucursal(int sucursalId, [FromQuery] bool? soloActivas = null)
         {
@@ -197,7 +197,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene el stock de una bodega específica
         /// </summary>
         [HttpGet("{id}/stock")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
         public async Task<ActionResult> GetStock(int id)
         {
             var emisorId = GetEmisorId();
