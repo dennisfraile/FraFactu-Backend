@@ -111,6 +111,7 @@ namespace FraFactu.Tests.UnitTests.Services
             Assert.NotNull(result);
             Assert.False(result!.RequiereCambioPwd);
             Assert.Null(GetClaim(result.Token, "pwd_change_required")); // token completo, sin restricción
+            Assert.Equal(60 * 60, result.ExpiresIn); // ExpiresIn en segundos (ExpirationMinutes=60 en el setup)
 
             var updated = await _context.Usuarios.FindAsync(user.Id);
             Assert.False(updated!.RequiereCambioPwd);
