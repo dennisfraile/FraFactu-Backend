@@ -27,7 +27,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene una sucursal por su ID
         /// </summary>
         [HttpGet("{id}")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
         [ProducesResponseType(typeof(SucursalDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<SucursalDto>> GetById(int id)
@@ -50,7 +50,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene todas las sucursales del emisor
         /// </summary>
         [HttpGet]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
         [ProducesResponseType(typeof(List<SucursalListDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<List<SucursalListDto>>> GetAll(
             [FromQuery] bool? soloActivos,
@@ -83,7 +83,7 @@ namespace FraFactu.API.Controllers
         /// Usado por vistas como stock donde todos los roles necesitan ver todas las sucursales.
         /// </summary>
         [HttpGet("todas-activas")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor,Contador")]
         [ProducesResponseType(typeof(List<SucursalListDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<List<SucursalListDto>>> GetAllActivas()
         {

@@ -31,7 +31,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene todos los tipos de gasto con paginación, búsqueda y ordenamiento
         /// </summary>
         [HttpGet]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
         [ProducesResponseType(typeof(PaginatedResponse<TipoGastoDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult> GetAll(
             [FromQuery] PaginatedRequest request,
@@ -46,7 +46,7 @@ namespace FraFactu.API.Controllers
         /// Obtiene un tipo de gasto por su ID
         /// </summary>
         [HttpGet("{id}")]
-        [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
+        [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Cajero,Auditor")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> GetById(int id)

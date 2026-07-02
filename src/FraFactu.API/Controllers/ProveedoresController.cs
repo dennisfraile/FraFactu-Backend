@@ -75,7 +75,7 @@ public class ProveedoresController : ControllerBase
     /// Obtener un proveedor por ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Contador,Auditor")]
+    [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Contador,Auditor")]
     public async Task<ActionResult<ProveedorDto>> ObtenerPorId(int id)
     {
         try
@@ -94,7 +94,7 @@ public class ProveedoresController : ControllerBase
     /// Buscar proveedor por NIT
     /// </summary>
     [HttpGet("nit/{nit}")]
-    [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Contador,Auditor")]
+    [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Contador,Auditor")]
     public async Task<ActionResult<ProveedorDto>> ObtenerPorNIT(string nit)
     {
         var emisorId = GetEmisorId();
@@ -109,7 +109,7 @@ public class ProveedoresController : ControllerBase
     /// Listar proveedores con paginación
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "EmisorAdmin,GerenteSucursal,Contador,Auditor")]
+    [Authorize(Roles = "SuperAdmin,EmisorAdmin,GerenteSucursal,Contador,Auditor")]
     public async Task<ActionResult<PagedResult<ProveedorDto>>> Listar(
         [FromQuery] int pagina = 1,
         [FromQuery] int tamanoPagina = 20,
