@@ -43,6 +43,12 @@ services:
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB:-frafactu};Username=${POSTGRES_USER:-frafactu};Password=${POSTGRES_PASSWORD:-frafactu_dev}"
       JwtSettings__SecretKey: ${JWT_SECRET_KEY:-dev-solo-cambiar-en-produccion-clave-larga-de-al-menos-32-bytes}
       Encryption__MasterKey: ${ENCRYPTION_MASTER_KEY:-MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+      # Bootstrap del primer admin (seeder de arranque). Vacío = no se crea usuario
+      # (solo roles); ver .env.example. SeedSampleData solo aplica en Development.
+      Bootstrap__AdminEmail: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      Bootstrap__AdminPassword: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      Bootstrap__AdminNombre: ${BOOTSTRAP_ADMIN_NOMBRE:-Administrador}
+      Bootstrap__SeedSampleData: ${BOOTSTRAP_SEED_SAMPLE_DATA:-false}
     ports:
       - "8080:8080"
 
