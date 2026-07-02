@@ -373,6 +373,23 @@ using (var scope = app.Services.CreateScope())
     if (db.Database.IsRelational())
     {
         await db.Database.MigrateAsync();
+
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var authService = scope.ServiceProvider.GetRequiredService<FraFactu.Application.Interfaces.IAuthService>();
+        var seedLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+        var bootstrapOptions = new FraFactu.Infrastructure.Persistence.Seeding.BootstrapOptions
+        {
+            AdminEmail = config["Bootstrap:AdminEmail"],
+            AdminPassword = config["Bootstrap:AdminPassword"],
+            AdminNombre = config["Bootstrap:AdminNombre"]
+        };
+        await FraFactu.Infrastructure.Persistence.Seeding.BootstrapSeeder.SeedAsync(db, bootstrapOptions, authService, seedLogger);
+
+        if (app.Environment.IsDevelopment() && config.GetValue<bool>("Bootstrap:SeedSampleData"))
+        {
+            await FraFactu.Infrastructure.Persistence.Seeding.SampleDataSeeder.SeedAsync(db, authService, seedLogger);
+        }
     }
 }
 
