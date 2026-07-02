@@ -104,6 +104,7 @@ namespace FraFactu.Infrastructure.Services
             return new LoginResponseDto
             {
                 Token = token,
+                ExpiresIn = _jwtSettings.ExpirationMinutes * 60, // segundos hasta la expiración del JWT
                 UserId = usuario.Id,
                 Email = usuario.Email,
                 NombreCompleto = usuario.NombreCompleto,
@@ -305,6 +306,7 @@ namespace FraFactu.Infrastructure.Services
             return new LoginResponseDto
             {
                 Token = token,
+                ExpiresIn = _jwtSettings.ExpirationMinutes * 60, // segundos hasta la expiración del JWT
                 UserId = usuario.Id,
                 Email = usuario.Email,
                 NombreCompleto = usuario.NombreCompleto,
@@ -473,6 +475,7 @@ namespace FraFactu.Infrastructure.Services
             return new LoginResponseDto
             {
                 Token = token,
+                ExpiresIn = _jwtSettings.ExpirationMinutes * 60, // segundos hasta la expiración del JWT
                 UserId = usuario.Id,
                 Email = usuario.Email,
                 NombreCompleto = usuario.NombreCompleto,
@@ -604,6 +607,7 @@ namespace FraFactu.Infrastructure.Services
             return CambiarEmisorActivoResultado.Ok(new LoginResponseDto
             {
                 Token = token,
+                ExpiresIn = _jwtSettings.ExpirationMinutes * 60, // segundos hasta la expiración del JWT
                 UserId = usuario.Id,
                 Email = usuario.Email,
                 NombreCompleto = usuario.NombreCompleto,
