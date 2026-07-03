@@ -139,6 +139,9 @@ namespace FraFactu.Infrastructure.Services
                 throw new InvalidOperationException("Emisor no encontrado");
 
             // 3. Generar NumeroControl y CodigoGeneracion
+            // El correlativo/NumeroControl que se calcula aquí es PROVISIONAL: en el proveedor
+            // relacional se recalcula bajo un advisory lock justo antes de insertar (paso 12.a),
+            // para evitar carreras entre emisiones concurrentes de la misma serie.
             var codigoGeneracion = GenerarCodigoGeneracion();
             var identificacion = dto.Identificacion!;
             var catTipoDocumentoId = ConvertirTipoDteACatalogoId(identificacion.TipoDte);
@@ -673,6 +676,29 @@ namespace FraFactu.Infrastructure.Services
             using var stockTransaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                // 12.a Serializar la generación del correlativo por serie
+                // (emisor + tipoDte + año + ambiente) con un lock transaccional de Postgres.
+                // Sin esto, dos emisiones concurrentes pueden leer el mismo MAX(correlativo)
+                // (línea ~148, fuera de la sección crítica) y producir el mismo NumeroControl,
+                // que Hacienda rechaza. El lock se libera al COMMIT/ROLLBACK de esta transacción;
+                // la transmisión a MH ocurre DESPUÉS del commit, por lo que el lock NO cubre el HTTP.
+                // Solo aplica en proveedor relacional (Npgsql); en el InMemory de tests es no-op.
+                if (_context.Database.IsNpgsql())
+                {
+                    var serieCorrelativo = $"correlativo:{emisorId}:{identificacion.TipoDte}:{anioEmision}:{ambiente}";
+                    await _context.Database.ExecuteSqlInterpolatedAsync(
+                        $"SELECT pg_advisory_xact_lock(hashtextextended({serieCorrelativo}, 0))");
+
+                    // Recalcular el correlativo YA bajo el lock y regenerar el NumeroControl,
+                    // descartando el valor provisional leído fuera de la sección crítica.
+                    var correlativoBloqueado = await ObtenerSiguienteCorrelativoAsync(
+                        emisorId, catTipoDocumentoId, identificacion.TipoDte,
+                        sucursal.CodigoEstablecimiento, codPuntoVenta, anioEmision, ambiente);
+                    factura.NumeroControl = NumeroControlHelper.Generar(
+                        identificacion.TipoDte, sucursal.TipoEstablecimiento?.Codigo,
+                        sucursal.CodigoEstablecimiento, codPuntoVenta, correlativoBloqueado);
+                }
+
                 _context.Facturas.Add(factura);
                 await _context.SaveChangesAsync();
 
