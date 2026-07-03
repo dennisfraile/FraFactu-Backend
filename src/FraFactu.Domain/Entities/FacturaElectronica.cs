@@ -54,6 +54,13 @@ namespace FraFactu.Domain.Entities
         public DateTime FechaEmision { get; set; }
         public TimeSpan HoraEmision { get; set; }
 
+        // Año de FechaEmision, materializado como columna propia.
+        // El correlativo se reinicia por año, así que forma parte de la clave de
+        // unicidad del NumeroControl (IX_Facturas_Emisor_Ambiente_Anio_NumeroControl).
+        // No se puede indexar EXTRACT(YEAR FROM FechaEmision) porque, sobre timestamptz,
+        // esa expresión es STABLE (no IMMUTABLE) y Postgres la rechaza en un índice.
+        public int AnioEmision { get; set; }
+
         // Fecha y Hora de Transmisión a Hacienda (para calcular plazo de invalidación)
         public DateTime? FechaTransmision { get; set; }
         public TimeSpan? HoraTransmision { get; set; }

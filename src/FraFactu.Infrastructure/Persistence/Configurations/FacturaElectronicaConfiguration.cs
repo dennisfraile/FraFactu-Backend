@@ -64,6 +64,16 @@ namespace FraFactu.Infrastructure.Persistence.Configurations
 
             builder.HasIndex(f => f.NumeroControl);
 
+            // Red de seguridad a nivel BD contra NumeroControl duplicados por carrera.
+            // La clave incluye Ambiente y AnioEmision porque el correlativo se reinicia por
+            // año y es independiente por ambiente, y el NumeroControl no codifica ninguno.
+            // Índice PARCIAL: excluye las pendientes sin número (NumeroControl = ''), que
+            // son un estado transitorio válido y pueden coexistir varias en la misma serie.
+            builder.HasIndex(f => new { f.EmisorId, f.Ambiente, f.AnioEmision, f.NumeroControl })
+                .IsUnique()
+                .HasFilter("\"NumeroControl\" <> ''")
+                .HasDatabaseName("IX_Facturas_Emisor_Ambiente_Anio_NumeroControl");
+
             builder.HasIndex(f => f.FechaEmision);
 
             builder.HasIndex(f => new { f.EmisorId, f.EstadoHacienda });
