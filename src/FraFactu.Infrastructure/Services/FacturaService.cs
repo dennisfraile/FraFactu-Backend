@@ -172,6 +172,7 @@ namespace FraFactu.Infrastructure.Services
                 CatTipoContingenciaId = identificacion.TipoContingencia,
                 MotivoContingencia = identificacion.MotivoContingencia,
                 FechaEmision = DateTime.SpecifyKind(identificacion.FechaEmision, DateTimeKind.Utc),
+                AnioEmision = anioEmision,
                 HoraEmision = TimeSpan.Parse(identificacion.HoraEmision),
 
                 // Receptor
@@ -3193,6 +3194,7 @@ namespace FraFactu.Infrastructure.Services
                 CodigoGeneracion = GenerarCodigoGeneracion(),
                 NumeroControl = numeroControl,
                 FechaEmision = DateTime.SpecifyKind(facturaDto.Identificacion.FechaEmision, DateTimeKind.Utc),
+                AnioEmision = facturaDto.Identificacion.FechaEmision.Year,
                 HoraEmision = TimeSpan.Parse(facturaDto.Identificacion.HoraEmision),
                 Version = ObtenerVersionSegunTipoDte(facturaDto.Identificacion.TipoDte),
                 Ambiente = emisor.AmbienteDestino?.Codigo ?? "00",
