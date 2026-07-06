@@ -58,6 +58,7 @@ public class DashboardService : IDashboardService
         var fechaInicio = DateTime.UtcNow.AddDays(-dias);
 
         var query = _context.Facturas
+            .AsNoTracking()
             .Where(f => f.EmisorId == emisorId && f.FechaEmision >= fechaInicio && f.EstadoHacienda == "PROCESADO");
 
         if (!string.IsNullOrEmpty(ambiente))
@@ -80,6 +81,7 @@ public class DashboardService : IDashboardService
     public async Task<List<ProductoMasVendido>> ObtenerProductosMasVendidosAsync(int emisorId, int top = 10, DateTime? fechaInicio = null, DateTime? fechaFin = null, int? sucursalId = null, List<int>? sucursalIds = null, string? ambiente = null)
     {
         var query = _context.FacturaDetalles
+            .AsNoTracking()
             .Include(d => d.Producto)
             .Include(d => d.Factura)
             .Where(d => d.ProductoId != null && d.Factura.EmisorId == emisorId && d.Factura.EstadoHacienda == "PROCESADO");
@@ -126,6 +128,7 @@ public class DashboardService : IDashboardService
         fechaFin ??= DateTime.UtcNow;
 
         var query = _context.FacturaDetalles
+            .AsNoTracking()
             .Include(d => d.Producto)
                 .ThenInclude(p => p!.Categoria)
             .Include(d => d.Factura)
@@ -173,6 +176,7 @@ public class DashboardService : IDashboardService
         fechaFin ??= DateTime.UtcNow;
 
         var query = _context.Facturas
+            .AsNoTracking()
             .Include(f => f.Vendedor)
             .Where(f => f.EmisorId == emisorId && f.FechaEmision >= fechaInicio && f.FechaEmision <= fechaFin && f.EstadoHacienda == "PROCESADO" && f.VendedorId != null);
 
@@ -223,6 +227,7 @@ public class DashboardService : IDashboardService
         fechaFin ??= DateTime.UtcNow;
 
         var query = _context.Facturas
+            .AsNoTracking()
             .Include(f => f.Vendedor)
             .Include(f => f.Receptor)
             .Include(f => f.Sucursal)
@@ -302,6 +307,7 @@ public class DashboardService : IDashboardService
         fechaFin ??= DateTime.UtcNow;
 
         var query = _context.FacturaDetalles
+            .AsNoTracking()
             .Include(d => d.Producto)
                 .ThenInclude(p => p!.Categoria)
             .Include(d => d.Factura)
@@ -384,6 +390,7 @@ public class DashboardService : IDashboardService
         string? ambiente = null)
     {
         var query = _context.Facturas
+            .AsNoTracking()
             .Include(f => f.Sucursal)
             .Where(f => f.EmisorId == emisorId
                 && f.SucursalId != null
