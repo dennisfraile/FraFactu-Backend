@@ -36,6 +36,12 @@ namespace FraFactu.Domain.Entities
         public DateTime? ExpiracionPwdTemporal { get; set; }
         public bool PermiteCambioPwd { get; set; } = true;   // False para el Admin de Hacienda
         public int IntentosFallidos { get; set; } = 0;       // Contador de intentos fallidos
+
+        /// <summary>
+        /// Instante (UTC) hasta el cual la cuenta está bloqueada por exceso de
+        /// intentos fallidos. Null cuando no hay bloqueo. Se auto-libera al pasar.
+        /// </summary>
+        public DateTime? BloqueadoHasta { get; set; }
         public DateTime? UltimoAcceso { get; set; }          // Fecha y hora del último acceso exitoso
         public EstadoUsuario Estado { get; set; } = EstadoUsuario.Activo;
 

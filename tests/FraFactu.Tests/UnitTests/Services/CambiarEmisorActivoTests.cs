@@ -50,13 +50,17 @@ namespace FraFactu.Tests.UnitTests.Services
 
             var googleValidator = new Mock<IGoogleTokenValidator>();
 
+            var loginSec = new Mock<IOptions<LoginSecuritySettings>>();
+            loginSec.Setup(x => x.Value).Returns(new LoginSecuritySettings());
+
             _authService = new AuthService(
                 _context,
                 jwtSettings.Object,
                 googleAuthSettings.Object,
                 googleValidator.Object,
                 new Mock<IAuthEmailService>().Object,
-                NullLogger<AuthService>.Instance
+                NullLogger<AuthService>.Instance,
+                loginSec.Object
             );
 
             SeedDatos();

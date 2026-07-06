@@ -49,6 +49,9 @@ namespace FraFactu.Tests.UnitTests.Services
 
             _mockTokenValidator = new Mock<IGoogleTokenValidator>();
 
+            var loginSec = new Mock<IOptions<LoginSecuritySettings>>();
+            loginSec.Setup(x => x.Value).Returns(new LoginSecuritySettings());
+
             // Initialize Service
             _authService = new AuthService(
                 _context,
@@ -56,7 +59,8 @@ namespace FraFactu.Tests.UnitTests.Services
                 _mockGoogleAuthSettings.Object,
                 _mockTokenValidator.Object,
                 new Mock<IAuthEmailService>().Object,
-                NullLogger<AuthService>.Instance
+                NullLogger<AuthService>.Instance,
+                loginSec.Object
             );
         }
 
