@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using System.IO.Compression;
 using System.Security.Claims;
@@ -427,6 +428,20 @@ using (var scope = app.Services.CreateScope())
         }
     }
 }
+
+// Reverse proxy (Azure App Service): recuperar la IP real del cliente desde
+// X-Forwarded-For para que el rate limiting por IP particione por cliente y no
+// por la IP del front-end. Se limpian KnownNetworks/KnownProxies porque App
+// Service no expone una IP fija de proxy y fuerza que todo el tráfico entre por
+// su front-end. ADVERTENCIA: esto confía en X-Forwarded-For; solo es seguro
+// mientras Kestrel no sea alcanzable directamente saltándose el proxy.
+var forwardedHeadersOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 // Global Exception Handling
 app.UseMiddleware<FraFactu.API.Middleware.GlobalExceptionMiddleware>();
