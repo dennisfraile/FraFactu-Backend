@@ -511,8 +511,8 @@ public class DashboardService : IDashboardService
         fechaDesde ??= DateTime.UtcNow.AddDays(-30);
         fechaHasta ??= DateTime.UtcNow;
 
-        // Obtener facturas del cajero
         var query = _context.Facturas
+            .AsNoTracking()
             .Where(f => f.EmisorId == emisorId &&
                        f.UsuarioId == usuarioId &&
                        f.FechaEmision >= fechaDesde &&
@@ -522,27 +522,27 @@ public class DashboardService : IDashboardService
         if (!string.IsNullOrEmpty(ambiente))
             query = query.Where(f => f.Ambiente == ambiente);
 
-        var facturas = await query.ToListAsync();
-
-        var montoTotal = facturas.Sum(f => f.TotalPagar);
-
-        // Ventas agrupadas por día
-        var ventasPorDia = facturas
+        // Ventas agrupadas por día en SQL (espejo de ObtenerVentasPorDiaAsync).
+        var ventasPorDia = await query
             .GroupBy(f => f.FechaEmision.Date)
             .Select(g => new Application.DTOs.Dashboard.VentaPorDiaDto
             {
                 Fecha = g.Key,
                 CantidadFacturas = g.Count(),
-                MontoTotal = g.Sum(f => f.TotalPagar)
+                MontoTotal = g.Sum(x => x.TotalPagar)
             })
             .OrderBy(v => v.Fecha)
-            .ToList();
+            .ToListAsync();
+
+        // Totales derivados de la lista diaria (pequeña), sin otro round-trip.
+        var totalFacturas = ventasPorDia.Sum(v => v.CantidadFacturas);
+        var montoTotal = ventasPorDia.Sum(v => v.MontoTotal);
 
         return new Application.DTOs.Dashboard.DashboardCajeroDto
         {
-            TotalFacturas = facturas.Count,
+            TotalFacturas = totalFacturas,
             MontoTotalVendido = montoTotal,
-            PromedioVenta = facturas.Any() ? montoTotal / facturas.Count : 0,
+            PromedioVenta = totalFacturas > 0 ? montoTotal / totalFacturas : 0,
             VentasPorDia = ventasPorDia
         };
     }
