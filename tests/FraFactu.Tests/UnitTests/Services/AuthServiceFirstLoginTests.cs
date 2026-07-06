@@ -42,13 +42,17 @@ namespace FraFactu.Tests.UnitTests.Services
             var google = new Mock<IOptions<GoogleAuthSettings>>();
             google.Setup(x => x.Value).Returns(new GoogleAuthSettings { ClientId = "cid", ClientSecret = "cs" });
 
+            var loginSec = new Mock<IOptions<LoginSecuritySettings>>();
+            loginSec.Setup(x => x.Value).Returns(new LoginSecuritySettings());
+
             _authService = new AuthService(
                 _context,
                 jwt.Object,
                 google.Object,
                 new Mock<IGoogleTokenValidator>().Object,
                 new Mock<IAuthEmailService>().Object,
-                NullLogger<AuthService>.Instance);
+                NullLogger<AuthService>.Instance,
+                loginSec.Object);
         }
 
         private async Task<Usuario> SeedTempPasswordUserAsync(string password, DateTime? expira)
@@ -86,9 +90,10 @@ namespace FraFactu.Tests.UnitTests.Services
 
             var result = await _authService.LoginAsync(new LoginDto { Email = "temp@test.com", Password = "Temp1234" });
 
-            Assert.NotNull(result);
-            Assert.True(result!.RequiereCambioPwd);
-            Assert.Equal("true", GetClaim(result.Token, "pwd_change_required"));
+            Assert.Equal(LoginStatus.Ok, result.Status);
+            Assert.NotNull(result.Response);
+            Assert.True(result.Response!.RequiereCambioPwd);
+            Assert.Equal("true", GetClaim(result.Response.Token, "pwd_change_required"));
         }
 
         [Fact]
@@ -98,7 +103,7 @@ namespace FraFactu.Tests.UnitTests.Services
 
             var result = await _authService.LoginAsync(new LoginDto { Email = "temp@test.com", Password = "Temp1234" });
 
-            Assert.Null(result);
+            Assert.Equal(LoginStatus.CredencialesInvalidas, result.Status);
         }
 
         [Fact]

@@ -25,6 +25,7 @@ namespace FraFactu.Infrastructure.Services
         private readonly IGoogleTokenValidator _googleTokenValidator;
         private readonly IAuthEmailService _authEmailService;
         private readonly ILogger<AuthService> _logger;
+        private readonly LoginSecuritySettings _loginSecurity;
 
         // Vigencia del token de reset de contraseña.
         private static readonly TimeSpan ResetTokenVigencia = TimeSpan.FromMinutes(30);
@@ -35,7 +36,8 @@ namespace FraFactu.Infrastructure.Services
             IOptions<GoogleAuthSettings> googleAuthSettings,
             IGoogleTokenValidator googleTokenValidator,
             IAuthEmailService authEmailService,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            IOptions<LoginSecuritySettings> loginSecurity)
         {
             _context = context;
             _jwtSettings = jwtSettings.Value;
@@ -43,31 +45,54 @@ namespace FraFactu.Infrastructure.Services
             _googleTokenValidator = googleTokenValidator;
             _authEmailService = authEmailService;
             _logger = logger;
+            _loginSecurity = loginSecurity.Value;
         }
 
-        public async Task<LoginResponseDto?> LoginAsync(LoginDto loginDto)
+        public async Task<LoginResultado> LoginAsync(LoginDto loginDto)
         {
-            // Buscar usuario por email
             var usuario = await _context.Usuarios
                 .Include(u => u.Emisor)
                 .Include(u => u.Rol)
                 .Include(u => u.UsuarioSucursales)
                 .FirstOrDefaultAsync(u => u.Email == loginDto.Email);
 
+            // Email inexistente o cuenta no activa: sin contador (no hay fuga de enumeración).
             if (usuario == null || usuario.Estado != EstadoUsuario.Activo)
-                return null;
+                return LoginResultado.CredencialesInvalidas();
 
-            // Verificar contraseña (solo para usuarios con autenticación local)
+            // Bloqueo temporal vigente: rechazar sin verificar password ni incrementar.
+            if (usuario.BloqueadoHasta.HasValue && usuario.BloqueadoHasta.Value > DateTime.UtcNow)
+            {
+                var restantes = (int)Math.Ceiling((usuario.BloqueadoHasta.Value - DateTime.UtcNow).TotalSeconds);
+                return LoginResultado.Bloqueado(restantes);
+            }
+
+            // Password incorrecto: incrementar contador y, si toca, bloquear.
             if (string.IsNullOrEmpty(usuario.PasswordHash) || !VerifyPassword(loginDto.Password, usuario.PasswordHash))
-                return null;
+            {
+                usuario.IntentosFallidos++;
+                if (usuario.IntentosFallidos >= _loginSecurity.MaxFailedAttempts)
+                {
+                    usuario.BloqueadoHasta = DateTime.UtcNow.AddMinutes(_loginSecurity.LockoutMinutes);
+                    usuario.IntentosFallidos = 0; // tras auto-liberarse arranca con tanda nueva
+                    await _context.SaveChangesAsync();
+                    return LoginResultado.Bloqueado(_loginSecurity.LockoutMinutes * 60);
+                }
+                await _context.SaveChangesAsync();
+                return LoginResultado.CredencialesInvalidas();
+            }
 
-            // Clave temporal: si caducó, se rechaza el login (el usuario debe usar
-            // "olvidé mi contraseña" para obtener un nuevo acceso).
+            // Password correcto: acertar siempre limpia contador y bloqueo.
+            usuario.IntentosFallidos = 0;
+            usuario.BloqueadoHasta = null;
+
+            // Clave temporal caducada: se rechaza (comportamiento actual; usar "olvidé mi contraseña").
             if (usuario.RequiereCambioPwd
                 && usuario.ExpiracionPwdTemporal.HasValue
                 && usuario.ExpiracionPwdTemporal.Value < DateTime.UtcNow)
             {
-                return null;
+                await _context.SaveChangesAsync();
+                return LoginResultado.CredencialesInvalidas();
             }
 
             // Actualizar último acceso
@@ -83,9 +108,6 @@ namespace FraFactu.Infrastructure.Services
 
             var sucursalIds = usuario.UsuarioSucursales.Select(us => us.SucursalId).ToList();
 
-            // Generar token (identidad 100% local; emisores_accesibles se calcula
-            // localmente a partir del EmisorId en GenerateJwtToken). Se emite
-            // token_version desde Usuario.TokenVersion para la revocación local.
             var token = GenerateJwtToken(
                 usuario.Id,
                 usuario.Email,
@@ -100,11 +122,10 @@ namespace FraFactu.Infrastructure.Services
                 pwdChangeRequired: usuario.RequiereCambioPwd
             );
 
-            // Construir respuesta
-            return new LoginResponseDto
+            var response = new LoginResponseDto
             {
                 Token = token,
-                ExpiresIn = _jwtSettings.ExpirationMinutes * 60, // segundos hasta la expiración del JWT
+                ExpiresIn = _jwtSettings.ExpirationMinutes * 60,
                 UserId = usuario.Id,
                 Email = usuario.Email,
                 NombreCompleto = usuario.NombreCompleto,
@@ -116,6 +137,8 @@ namespace FraFactu.Infrastructure.Services
                 RolNombre = usuario.Rol.Nombre,
                 RequiereCambioPwd = usuario.RequiereCambioPwd
             };
+
+            return LoginResultado.Ok(response);
         }
 
         public string GenerateJwtToken(int usuarioId, string email, string nombreCompleto,

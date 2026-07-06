@@ -41,13 +41,17 @@ namespace FraFactu.Tests.UnitTests.Services
             var google = new Mock<IOptions<GoogleAuthSettings>>();
             google.Setup(x => x.Value).Returns(new GoogleAuthSettings { ClientId = "cid", ClientSecret = "cs" });
 
+            var loginSec = new Mock<IOptions<LoginSecuritySettings>>();
+            loginSec.Setup(x => x.Value).Returns(new LoginSecuritySettings());
+
             _authService = new AuthService(
                 _context,
                 jwt.Object,
                 google.Object,
                 new Mock<IGoogleTokenValidator>().Object,
                 _authEmail.Object,
-                NullLogger<AuthService>.Instance);
+                NullLogger<AuthService>.Instance,
+                loginSec.Object);
         }
 
         private async Task<Usuario> SeedUserAsync(string email = "user@test.com", int tokenVersion = 0)

@@ -8,7 +8,7 @@ namespace FraFactu.Application.Interfaces
         /// <summary>
         /// Autentica un usuario y genera un JWT token
         /// </summary>
-        Task<LoginResponseDto?> LoginAsync(LoginDto loginDto);
+        Task<LoginResultado> LoginAsync(LoginDto loginDto);
 
         /// <summary>
         /// Genera un JWT token para un usuario.

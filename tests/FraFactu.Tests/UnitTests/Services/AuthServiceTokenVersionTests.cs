@@ -42,13 +42,17 @@ namespace FraFactu.Tests.UnitTests.Services
             var google = new Mock<IOptions<GoogleAuthSettings>>();
             google.Setup(x => x.Value).Returns(new GoogleAuthSettings { ClientId = "cid", ClientSecret = "cs" });
 
+            var loginSec = new Mock<IOptions<LoginSecuritySettings>>();
+            loginSec.Setup(x => x.Value).Returns(new LoginSecuritySettings());
+
             _authService = new AuthService(
                 _context,
                 jwt.Object,
                 google.Object,
                 new Mock<IGoogleTokenValidator>().Object,
                 new Mock<IAuthEmailService>().Object,
-                NullLogger<AuthService>.Instance);
+                NullLogger<AuthService>.Instance,
+                loginSec.Object);
         }
 
         private async Task<Usuario> SeedLocalUserAsync(string password, int tokenVersion)
@@ -84,8 +88,8 @@ namespace FraFactu.Tests.UnitTests.Services
 
             var result = await _authService.LoginAsync(new LoginDto { Email = "user@test.com", Password = "Secret123" });
 
-            Assert.NotNull(result);
-            Assert.Equal("7", GetClaim(result!.Token, "token_version"));
+            Assert.Equal(LoginStatus.Ok, result.Status);
+            Assert.Equal("7", GetClaim(result.Response!.Token, "token_version"));
         }
 
         [Fact]
