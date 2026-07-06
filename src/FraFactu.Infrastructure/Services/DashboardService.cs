@@ -20,6 +20,7 @@ public class DashboardService : IDashboardService
         fechaFin ??= DateTime.UtcNow;
 
         var query = _context.Facturas
+            .AsNoTracking()
             .Where(f => f.EmisorId == emisorId && f.FechaEmision >= fechaInicio && f.FechaEmision <= fechaFin);
 
         if (!string.IsNullOrEmpty(ambiente))
@@ -30,17 +31,24 @@ public class DashboardService : IDashboardService
         else if (sucursalId.HasValue)
             query = query.Where(f => f.SucursalId == sucursalId.Value);
 
-        var facturas = await query.ToListAsync();
+        // Agregación en SQL: una fila por estado (Count + Sum), en vez de
+        // materializar todas las facturas y agregar en memoria.
+        var agg = await query
+            .GroupBy(f => f.EstadoHacienda)
+            .Select(g => new { Estado = g.Key, Cantidad = g.Count(), Total = g.Sum(x => x.TotalPagar) })
+            .ToListAsync();
 
-        var facturasAprobadas = facturas.Where(f => f.EstadoHacienda == "PROCESADO").ToList();
+        var procesado = agg.FirstOrDefault(a => a.Estado == "PROCESADO");
+        var totalAprobadas = procesado?.Cantidad ?? 0;
+        var totalVentas = procesado?.Total ?? 0m;
 
         return new DashboardKPIs(
-            TotalFacturas: facturasAprobadas.Count,
-            TotalVentas: facturasAprobadas.Sum(f => f.TotalPagar),
-            PromedioVenta: facturasAprobadas.Any() ? facturasAprobadas.Average(f => f.TotalPagar) : 0,
-            FacturasAprobadas: facturasAprobadas.Count,
-            FacturasPendientes: facturas.Count(f => f.EstadoHacienda == "PENDIENTE_ENVIO"),
-            FacturasRechazadas: facturas.Count(f => f.EstadoHacienda == "RECHAZADO"),
+            TotalFacturas: totalAprobadas,
+            TotalVentas: totalVentas,
+            PromedioVenta: totalAprobadas > 0 ? totalVentas / totalAprobadas : 0,
+            FacturasAprobadas: totalAprobadas,
+            FacturasPendientes: agg.FirstOrDefault(a => a.Estado == "PENDIENTE_ENVIO")?.Cantidad ?? 0,
+            FacturasRechazadas: agg.FirstOrDefault(a => a.Estado == "RECHAZADO")?.Cantidad ?? 0,
             CrecimientoVentas: await CalcularCrecimientoAsync(emisorId, fechaInicio.Value, fechaFin.Value, sucursalId, sucursalIds, fechaAnteriorInicio, fechaAnteriorFin, ambiente)
         );
     }
@@ -50,6 +58,7 @@ public class DashboardService : IDashboardService
         var fechaInicio = DateTime.UtcNow.AddDays(-dias);
 
         var query = _context.Facturas
+            .AsNoTracking()
             .Where(f => f.EmisorId == emisorId && f.FechaEmision >= fechaInicio && f.EstadoHacienda == "PROCESADO");
 
         if (!string.IsNullOrEmpty(ambiente))
@@ -72,6 +81,7 @@ public class DashboardService : IDashboardService
     public async Task<List<ProductoMasVendido>> ObtenerProductosMasVendidosAsync(int emisorId, int top = 10, DateTime? fechaInicio = null, DateTime? fechaFin = null, int? sucursalId = null, List<int>? sucursalIds = null, string? ambiente = null)
     {
         var query = _context.FacturaDetalles
+            .AsNoTracking()
             .Include(d => d.Producto)
             .Include(d => d.Factura)
             .Where(d => d.ProductoId != null && d.Factura.EmisorId == emisorId && d.Factura.EstadoHacienda == "PROCESADO");
@@ -118,6 +128,7 @@ public class DashboardService : IDashboardService
         fechaFin ??= DateTime.UtcNow;
 
         var query = _context.FacturaDetalles
+            .AsNoTracking()
             .Include(d => d.Producto)
                 .ThenInclude(p => p!.Categoria)
             .Include(d => d.Factura)
@@ -165,6 +176,7 @@ public class DashboardService : IDashboardService
         fechaFin ??= DateTime.UtcNow;
 
         var query = _context.Facturas
+            .AsNoTracking()
             .Include(f => f.Vendedor)
             .Where(f => f.EmisorId == emisorId && f.FechaEmision >= fechaInicio && f.FechaEmision <= fechaFin && f.EstadoHacienda == "PROCESADO" && f.VendedorId != null);
 
@@ -215,6 +227,7 @@ public class DashboardService : IDashboardService
         fechaFin ??= DateTime.UtcNow;
 
         var query = _context.Facturas
+            .AsNoTracking()
             .Include(f => f.Vendedor)
             .Include(f => f.Receptor)
             .Include(f => f.Sucursal)
@@ -294,6 +307,7 @@ public class DashboardService : IDashboardService
         fechaFin ??= DateTime.UtcNow;
 
         var query = _context.FacturaDetalles
+            .AsNoTracking()
             .Include(d => d.Producto)
                 .ThenInclude(p => p!.Categoria)
             .Include(d => d.Factura)
@@ -376,6 +390,7 @@ public class DashboardService : IDashboardService
         string? ambiente = null)
     {
         var query = _context.Facturas
+            .AsNoTracking()
             .Include(f => f.Sucursal)
             .Where(f => f.EmisorId == emisorId
                 && f.SucursalId != null
@@ -460,9 +475,11 @@ public class DashboardService : IDashboardService
         }
 
         var queryActual = _context.Facturas
+            .AsNoTracking()
             .Where(f => f.EmisorId == emisorId && f.FechaEmision >= fechaInicio && f.FechaEmision <= fechaFin && f.EstadoHacienda == "PROCESADO");
 
         var queryAnterior = _context.Facturas
+            .AsNoTracking()
             .Where(f => f.EmisorId == emisorId && f.FechaEmision >= periodoAntInicio && f.FechaEmision <= periodoAntFin && f.EstadoHacienda == "PROCESADO");
 
         if (!string.IsNullOrEmpty(ambiente))
@@ -501,8 +518,8 @@ public class DashboardService : IDashboardService
         fechaDesde ??= DateTime.UtcNow.AddDays(-30);
         fechaHasta ??= DateTime.UtcNow;
 
-        // Obtener facturas del cajero
         var query = _context.Facturas
+            .AsNoTracking()
             .Where(f => f.EmisorId == emisorId &&
                        f.UsuarioId == usuarioId &&
                        f.FechaEmision >= fechaDesde &&
@@ -512,27 +529,27 @@ public class DashboardService : IDashboardService
         if (!string.IsNullOrEmpty(ambiente))
             query = query.Where(f => f.Ambiente == ambiente);
 
-        var facturas = await query.ToListAsync();
-
-        var montoTotal = facturas.Sum(f => f.TotalPagar);
-
-        // Ventas agrupadas por día
-        var ventasPorDia = facturas
+        // Ventas agrupadas por día en SQL (espejo de ObtenerVentasPorDiaAsync).
+        var ventasPorDia = await query
             .GroupBy(f => f.FechaEmision.Date)
             .Select(g => new Application.DTOs.Dashboard.VentaPorDiaDto
             {
                 Fecha = g.Key,
                 CantidadFacturas = g.Count(),
-                MontoTotal = g.Sum(f => f.TotalPagar)
+                MontoTotal = g.Sum(x => x.TotalPagar)
             })
             .OrderBy(v => v.Fecha)
-            .ToList();
+            .ToListAsync();
+
+        // Totales derivados de la lista diaria (pequeña), sin otro round-trip.
+        var totalFacturas = ventasPorDia.Sum(v => v.CantidadFacturas);
+        var montoTotal = ventasPorDia.Sum(v => v.MontoTotal);
 
         return new Application.DTOs.Dashboard.DashboardCajeroDto
         {
-            TotalFacturas = facturas.Count,
+            TotalFacturas = totalFacturas,
             MontoTotalVendido = montoTotal,
-            PromedioVenta = facturas.Any() ? montoTotal / facturas.Count : 0,
+            PromedioVenta = totalFacturas > 0 ? montoTotal / totalFacturas : 0,
             VentasPorDia = ventasPorDia
         };
     }
