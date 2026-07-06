@@ -17,6 +17,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.IO.Compression;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -101,6 +103,9 @@ builder.Services.AddValidatorsFromAssemblyContaining<FraFactu.Application.Valida
 // Configuración JWT
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+
+// Configuración de política anti-fuerza-bruta del login (lockout de cuenta + rate limit por IP)
+builder.Services.Configure<LoginSecuritySettings>(builder.Configuration.GetSection("LoginSecurity"));
 
 // Configuración Google OAuth
 builder.Services.Configure<GoogleAuthSettings>(builder.Configuration.GetSection("GoogleAuth"));
@@ -326,6 +331,36 @@ builder.Services.AddControllers()
     });
 builder.Services.AddValidatorsFromAssemblyContaining<FraFactu.Application.Validators.CrearFacturaValidator>();
 
+// Rate limiting anti-fuerza-bruta del login (partición por IP).
+//
+// OJO: la política se resuelve LAZY, por request, leyendo IOptions<LoginSecuritySettings>
+// desde httpContext.RequestServices — NO se captura un snapshot de
+// builder.Configuration en una variable local aquí. Con WebApplicationFactory
+// (WithWebHostBuilder + ConfigureAppConfiguration en tests), el host de pruebas
+// mergea su configuración adicional justo antes/durante builder.Build(); un
+// snapshot leído en este punto del top-level Program.cs (antes de Build())
+// quedaría con los valores de appsettings.json y ninguna override de test
+// surtiría efecto. Resolviendo IOptions dentro del delegate de AddPolicy se
+// lee la configuración ya fusionada del contenedor de DI final.
+builder.Services.AddRateLimiter(rateLimiterOptions =>
+{
+    rateLimiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    rateLimiterOptions.AddPolicy("login", httpContext =>
+    {
+        var loginSecurity = httpContext.RequestServices
+            .GetRequiredService<Microsoft.Extensions.Options.IOptions<LoginSecuritySettings>>().Value;
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = loginSecurity.IpPermitLimit,
+                Window = TimeSpan.FromSeconds(loginSecurity.IpWindowSeconds),
+                QueueLimit = 0
+            });
+    });
+});
+
 // Health Checks
 builder.Services.AddHealthChecks();
 
@@ -465,6 +500,8 @@ app.UseResponseCaching();
 // Authentication & Authorization DEBE estar antes de MapControllers
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseRateLimiter();
 
 // Restricción de primer ingreso: tras autenticar, si el usuario tiene un cambio
 // de contraseña obligatorio pendiente, solo se le permite el endpoint de cambio.

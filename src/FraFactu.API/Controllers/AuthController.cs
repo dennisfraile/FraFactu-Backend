@@ -12,6 +12,7 @@ using FraFactu.Application.Common.Settings;
 using Microsoft.Extensions.Options;
 using FraFactu.Domain.Entities;
 using FraFactu.API.Helpers;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FraFactu.API.Controllers
 {
@@ -40,6 +41,7 @@ namespace FraFactu.API.Controllers
         /// Inicia sesión y devuelve un JWT token
         /// </summary>
         [HttpPost("login")]
+        [EnableRateLimiting("login")]
         [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status423Locked)]
