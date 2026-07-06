@@ -20,6 +20,7 @@ public class DashboardService : IDashboardService
         fechaFin ??= DateTime.UtcNow;
 
         var query = _context.Facturas
+            .AsNoTracking()
             .Where(f => f.EmisorId == emisorId && f.FechaEmision >= fechaInicio && f.FechaEmision <= fechaFin);
 
         if (!string.IsNullOrEmpty(ambiente))
@@ -30,17 +31,24 @@ public class DashboardService : IDashboardService
         else if (sucursalId.HasValue)
             query = query.Where(f => f.SucursalId == sucursalId.Value);
 
-        var facturas = await query.ToListAsync();
+        // Agregación en SQL: una fila por estado (Count + Sum), en vez de
+        // materializar todas las facturas y agregar en memoria.
+        var agg = await query
+            .GroupBy(f => f.EstadoHacienda)
+            .Select(g => new { Estado = g.Key, Cantidad = g.Count(), Total = g.Sum(x => x.TotalPagar) })
+            .ToListAsync();
 
-        var facturasAprobadas = facturas.Where(f => f.EstadoHacienda == "PROCESADO").ToList();
+        var procesado = agg.FirstOrDefault(a => a.Estado == "PROCESADO");
+        var totalAprobadas = procesado?.Cantidad ?? 0;
+        var totalVentas = procesado?.Total ?? 0m;
 
         return new DashboardKPIs(
-            TotalFacturas: facturasAprobadas.Count,
-            TotalVentas: facturasAprobadas.Sum(f => f.TotalPagar),
-            PromedioVenta: facturasAprobadas.Any() ? facturasAprobadas.Average(f => f.TotalPagar) : 0,
-            FacturasAprobadas: facturasAprobadas.Count,
-            FacturasPendientes: facturas.Count(f => f.EstadoHacienda == "PENDIENTE_ENVIO"),
-            FacturasRechazadas: facturas.Count(f => f.EstadoHacienda == "RECHAZADO"),
+            TotalFacturas: totalAprobadas,
+            TotalVentas: totalVentas,
+            PromedioVenta: totalAprobadas > 0 ? totalVentas / totalAprobadas : 0,
+            FacturasAprobadas: totalAprobadas,
+            FacturasPendientes: agg.FirstOrDefault(a => a.Estado == "PENDIENTE_ENVIO")?.Cantidad ?? 0,
+            FacturasRechazadas: agg.FirstOrDefault(a => a.Estado == "RECHAZADO")?.Cantidad ?? 0,
             CrecimientoVentas: await CalcularCrecimientoAsync(emisorId, fechaInicio.Value, fechaFin.Value, sucursalId, sucursalIds, fechaAnteriorInicio, fechaAnteriorFin, ambiente)
         );
     }
@@ -460,9 +468,11 @@ public class DashboardService : IDashboardService
         }
 
         var queryActual = _context.Facturas
+            .AsNoTracking()
             .Where(f => f.EmisorId == emisorId && f.FechaEmision >= fechaInicio && f.FechaEmision <= fechaFin && f.EstadoHacienda == "PROCESADO");
 
         var queryAnterior = _context.Facturas
+            .AsNoTracking()
             .Where(f => f.EmisorId == emisorId && f.FechaEmision >= periodoAntInicio && f.FechaEmision <= periodoAntFin && f.EstadoHacienda == "PROCESADO");
 
         if (!string.IsNullOrEmpty(ambiente))
