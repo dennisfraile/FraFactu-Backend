@@ -1,5 +1,6 @@
 using FraFactu.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using System.Net;
 using System.Text.Json;
 
@@ -87,9 +88,10 @@ public class GlobalExceptionMiddleware
         }
         else if (exception is DbUpdateException dbEx)
         {
+            var pgEx = dbEx.InnerException as PostgresException;
             var innerMessage = dbEx.InnerException?.Message ?? dbEx.Message;
 
-            if (innerMessage.Contains("23505") || innerMessage.Contains("duplicate key"))
+            if (pgEx?.SqlState == PostgresErrorCodes.UniqueViolation)
             {
                 response.StatusCode = 409;
                 problemDetails = new
@@ -97,11 +99,11 @@ public class GlobalExceptionMiddleware
                     type = "https://tools.ietf.org/html/rfc7231#section-6.5.8",
                     title = "Registro duplicado",
                     status = 409,
-                    detail = innerMessage,
+                    detail = _env.IsDevelopment() ? innerMessage : "Ya existe un registro con esos datos.",
                     errorCode = "DUPLICATE_ENTRY"
                 };
             }
-            else if (innerMessage.Contains("23514") || innerMessage.Contains("check constraint"))
+            else if (pgEx?.SqlState == PostgresErrorCodes.CheckViolation)
             {
                 response.StatusCode = 409;
                 problemDetails = new

@@ -84,5 +84,9 @@ $RECYCLE.BIN/
 docs/superpowers/
 docs/PR-*.md
 
+# Reportes y salidas de trabajo local (no versionar)
+*-fix-report.md
+test_output.txt
+
 # Settings locales de Claude Code
 .claude/

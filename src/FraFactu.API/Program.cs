@@ -278,8 +278,6 @@ builder.Services.AddHttpClient<FraFactu.Application.Interfaces.Hacienda.IHaciend
 
 // Repositorio de Catálogos y Mapper para JSON de MH
 builder.Services.AddScoped<FraFactu.Application.Interfaces.Repositories.ICatalogRepository, FraFactu.Infrastructure.Repositories.CatalogRepository>();
-// Repositorio de Catálogos y Mapper para JSON de MH
-builder.Services.AddScoped<FraFactu.Application.Interfaces.Repositories.ICatalogRepository, FraFactu.Infrastructure.Repositories.CatalogRepository>();
 builder.Services.AddScoped<FraFactu.Application.Services.DteJsonMapperService>();
 
 // Servicios de Diagnóstico y Contingencia
