@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 namespace FraFactu.API.HealthChecks;
 
 /// <summary>
-/// Readiness de los jobs en background. Los 7 <see cref="BackgroundService"/> del
+/// Readiness de los jobs en background. Los <see cref="BackgroundService"/> del
 /// sistema son loops infinitos que atrapan sus excepciones internamente, así que en
 /// operación normal su <c>ExecuteTask</c> nunca termina. Señal de fallo = la tarea
 /// dejó de correr (RanToCompletion / Faulted / Canceled). Un servicio aún no
@@ -12,6 +12,11 @@ namespace FraFactu.API.HealthChecks;
 ///
 /// No requiere tocar ninguna clase de job: <c>BackgroundService.ExecuteTask</c> es
 /// público desde .NET 6.
+///
+/// Limitación conocida: los jobs cuyo trabajo real corre en un <c>Timer</c>
+/// desacoplado (su <c>ExecuteAsync</c> solo hace <c>await Task.Delay(Infinite)</c>)
+/// se reportan sanos mientras el servicio siga vivo, aunque el callback del timer
+/// haya muerto en silencio. Este check confirma "servicio vivo", no "timer activo".
 /// </summary>
 public sealed class BackgroundServicesHealthCheck : IHealthCheck
 {
