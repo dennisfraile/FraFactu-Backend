@@ -361,7 +361,13 @@ builder.Services.AddRateLimiter(rateLimiterOptions =>
 });
 
 // Health Checks
-builder.Services.AddHealthChecks();
+// - liveness (/health): sin checks, 200 mientras el proceso responda.
+// - readiness (/health/ready): BD + jobs, tag "ready".
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<FraFactu.Infrastructure.Persistence.ApplicationDbContext>(
+        "database", tags: new[] { "ready" })
+    .AddCheck<FraFactu.API.HealthChecks.BackgroundServicesHealthCheck>(
+        "background-services", tags: new[] { "ready" });
 
 // CORS Configuration
 var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
@@ -524,8 +530,17 @@ app.UseMiddleware<FraFactu.API.Middleware.RequirePasswordChangeMiddleware>();
 app.MapControllers();
 
 // Health check endpoints
-app.MapHealthChecks("/health");
-app.MapHealthChecks("/health/ready");
+// Liveness: sin checks (el proceso responde). No reinicia el pod por un blip de BD.
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false
+});
+// Readiness: solo checks con tag "ready" (BD + jobs), respuesta JSON diagnosticable.
+app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+    ResponseWriter = FraFactu.API.HealthChecks.HealthCheckResponse.WriteJsonAsync
+});
 
 app.Run();
 
