@@ -4,6 +4,7 @@ using FraFactu.Application.Common;
 using FraFactu.Application.Services;
 using FraFactu.Domain.Entities;
 using FraFactu.Infrastructure.Persistence;
+using FraFactu.Infrastructure.Helpers;
 
 namespace FraFactu.Infrastructure.Services;
 
@@ -29,6 +30,9 @@ public class GastoAdministrativoService : IGastoAdministrativoService
         string? sortBy = null,
         bool sortDesc = false)
     {
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
+
         var query = _context.GastosAdministrativos
             .Include(g => g.TipoGasto)
             .Include(g => g.CompraExterna)
@@ -104,6 +108,9 @@ public class GastoAdministrativoService : IGastoAdministrativoService
         int? sucursalId = null,
         List<int>? sucursalIds = null)
     {
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
+
         var query = _context.GastosAdministrativos
             .Include(g => g.CompraExterna)
             .Where(g => g.CompraExterna.Estado == "CONFIRMADA")
@@ -122,6 +129,9 @@ public class GastoAdministrativoService : IGastoAdministrativoService
 
     public async Task<Dictionary<string, decimal>> ObtenerGastosPorTipoAsync(DateTime desde, DateTime hasta)
     {
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
+
         var gastos = await _context.GastosAdministrativos
             .Include(g => g.TipoGasto)
             .Include(g => g.CompraExterna)
@@ -136,6 +146,9 @@ public class GastoAdministrativoService : IGastoAdministrativoService
 
     public async Task<Dictionary<string, decimal>> ObtenerGastosPorCentroCostoAsync(DateTime desde, DateTime hasta)
     {
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
+
         var gastos = await _context.GastosAdministrativos
             .Include(g => g.CompraExterna)
             .Where(g => g.CompraExterna.Estado == "CONFIRMADA")
