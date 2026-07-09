@@ -3,6 +3,7 @@ using FraFactu.Application.Common;
 using FraFactu.Application.Services;
 using FraFactu.Application.DTOs.Reportes;
 using FraFactu.Infrastructure.Persistence;
+using FraFactu.Infrastructure.Helpers;
 
 namespace FraFactu.Infrastructure.Services;
 
@@ -215,8 +216,8 @@ public class InventarioReporteService : IInventarioReporteService
         string? sortBy = null,
         bool sortDesc = false)
     {
-        desde = ToUtc(desde);
-        hasta = ToUtc(hasta);
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
 
         var query = _context.MovimientosInventario
             .Include(m => m.Producto)
@@ -324,8 +325,8 @@ public class InventarioReporteService : IInventarioReporteService
         string? sortBy = null,
         bool sortDesc = false)
     {
-        desde = desde.HasValue ? ToUtc(desde.Value) : DateTime.UtcNow.AddMonths(-1);
-        hasta = hasta.HasValue ? ToUtc(hasta.Value) : DateTime.UtcNow;
+        desde = desde.HasValue ? FechaHelper.ToUtc(desde.Value) : DateTime.UtcNow.AddMonths(-1);
+        hasta = hasta.HasValue ? FechaHelper.ToUtc(hasta.Value) : DateTime.UtcNow;
 
         var producto = await _context.ProductosServicios.FindAsync(productoId);
         if (producto == null)
@@ -374,8 +375,8 @@ public class InventarioReporteService : IInventarioReporteService
 
     public async Task<List<ResumenMovimientoPorTipoDto>> ObtenerResumenMovimientosPorTipoAsync(int emisorId, DateTime desde, DateTime hasta, int? sucursalId = null, int? bodegaId = null)
     {
-        desde = ToUtc(desde);
-        hasta = ToUtc(hasta);
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
 
         var query = _context.MovimientosInventario
             .Include(m => m.Bodega)
@@ -462,8 +463,8 @@ public class InventarioReporteService : IInventarioReporteService
 
     public async Task<decimal> ObtenerCostoMercanciaVendidaAsync(int emisorId, DateTime desde, DateTime hasta, int? sucursalId = null, int? bodegaId = null)
     {
-        desde = ToUtc(desde);
-        hasta = ToUtc(hasta);
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
 
         // ✅ LINQ funciona bien - sum simple
         var query = _context.MovimientosInventario
@@ -499,8 +500,8 @@ public class InventarioReporteService : IInventarioReporteService
 
     public async Task<List<RotacionAbcItemDto>> ObtenerRotacionAbcAsync(int emisorId, DateTime desde, DateTime hasta, int? sucursalId = null, int? bodegaId = null)
     {
-        desde = ToUtc(desde);
-        hasta = ToUtc(hasta);
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
 
         var query = _context.MovimientosInventario
             .Include(m => m.Producto)
@@ -726,17 +727,6 @@ public class InventarioReporteService : IInventarioReporteService
     }
 
     // MÉTODOS AUXILIARES
-
-    /// <summary>
-    /// Normaliza un DateTime a UTC.
-    /// Kind=Utc → sin cambio; Kind=Local → convierte a UTC; Kind=Unspecified → asume UTC (fechas de query string sin offset).
-    /// </summary>
-    internal static DateTime ToUtc(DateTime d) => d.Kind switch
-    {
-        DateTimeKind.Utc => d,
-        DateTimeKind.Local => d.ToUniversalTime(),
-        _ => DateTime.SpecifyKind(d, DateTimeKind.Utc)
-    };
 
     private async Task<decimal> ObtenerSaldoInicialAsync(int productoId, int emisorId, int? bodegaId, DateTime fecha)
     {
