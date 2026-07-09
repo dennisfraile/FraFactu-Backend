@@ -103,6 +103,28 @@ namespace FraFactu.Tests.UnitTests.Services
             Assert.Equal(100m, kpis.TotalVentas);
         }
 
+        [Fact]
+        public async Task ObtenerKPIsAsync_ConFechasKindUnspecified_AgregaCorrectamente()
+        {
+            // Simula el binding de query string ("?fechaInicio=2026-01-01"): Kind=Unspecified.
+            // InMemory no rechaza Unspecified (solo Npgsql lo hace), pero este test fija el
+            // contrato de que el servicio acepta fechas desnudas y agrega el rango correcto.
+            using var ctx = NewContext();
+            var inicio = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+            var fin = new DateTime(2026, 1, 31, 0, 0, 0, DateTimeKind.Unspecified);
+            ctx.Facturas.AddRange(
+                Factura(1, new DateTime(2026, 1, 5, 0, 0, 0, DateTimeKind.Utc), "PROCESADO", 100m),
+                Factura(1, new DateTime(2026, 1, 6, 0, 0, 0, DateTimeKind.Utc), "PROCESADO", 300m)
+            );
+            await ctx.SaveChangesAsync();
+            var svc = new DashboardService(ctx);
+
+            var kpis = await svc.ObtenerKPIsAsync(1, inicio, fin);
+
+            Assert.Equal(2, kpis.TotalFacturas);
+            Assert.Equal(400m, kpis.TotalVentas);
+        }
+
         // ---------- Cajero ----------
 
         [Fact]
