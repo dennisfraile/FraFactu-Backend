@@ -2,6 +2,7 @@ using FraFactu.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using FraFactu.Application.Common;
 using FraFactu.Application.Interfaces;
+using FraFactu.Infrastructure.Helpers;
 
 namespace FraFactu.Infrastructure.Services;
 
@@ -16,8 +17,8 @@ public class DashboardService : IDashboardService
 
     public async Task<DashboardKPIs> ObtenerKPIsAsync(int emisorId, DateTime? fechaInicio = null, DateTime? fechaFin = null, int? sucursalId = null, List<int>? sucursalIds = null, DateTime? fechaAnteriorInicio = null, DateTime? fechaAnteriorFin = null, string? ambiente = null)
     {
-        fechaInicio ??= DateTime.UtcNow.AddDays(-30);
-        fechaFin ??= DateTime.UtcNow;
+        fechaInicio = FechaHelper.ToUtc(fechaInicio ?? DateTime.UtcNow.AddDays(-30));
+        fechaFin = FechaHelper.ToUtc(fechaFin ?? DateTime.UtcNow);
 
         var query = _context.Facturas
             .AsNoTracking()
@@ -124,8 +125,8 @@ public class DashboardService : IDashboardService
 
     public async Task<List<VentasPorCategoria>> ObtenerVentasPorCategoriaAsync(int emisorId, int? sucursalId = null, DateTime? fechaInicio = null, DateTime? fechaFin = null, List<int>? sucursalIds = null, string? ambiente = null)
     {
-        fechaInicio ??= DateTime.UtcNow.AddDays(-30);
-        fechaFin ??= DateTime.UtcNow;
+        fechaInicio = FechaHelper.ToUtc(fechaInicio ?? DateTime.UtcNow.AddDays(-30));
+        fechaFin = FechaHelper.ToUtc(fechaFin ?? DateTime.UtcNow);
 
         var query = _context.FacturaDetalles
             .AsNoTracking()
@@ -172,8 +173,8 @@ public class DashboardService : IDashboardService
 
     public async Task<List<VentasPorVendedor>> ObtenerVentasPorVendedorAsync(int emisorId, DateTime? fechaInicio = null, DateTime? fechaFin = null, int? sucursalId = null, List<int>? sucursalIds = null, string? ambiente = null)
     {
-        fechaInicio ??= DateTime.UtcNow.AddDays(-30);
-        fechaFin ??= DateTime.UtcNow;
+        fechaInicio = FechaHelper.ToUtc(fechaInicio ?? DateTime.UtcNow.AddDays(-30));
+        fechaFin = FechaHelper.ToUtc(fechaFin ?? DateTime.UtcNow);
 
         var query = _context.Facturas
             .AsNoTracking()
@@ -223,8 +224,8 @@ public class DashboardService : IDashboardService
         List<int>? sucursalIds = null,
         string? ambiente = null)
     {
-        fechaInicio ??= DateTime.UtcNow.AddDays(-30);
-        fechaFin ??= DateTime.UtcNow;
+        fechaInicio = FechaHelper.ToUtc(fechaInicio ?? DateTime.UtcNow.AddDays(-30));
+        fechaFin = FechaHelper.ToUtc(fechaFin ?? DateTime.UtcNow);
 
         var query = _context.Facturas
             .AsNoTracking()
@@ -303,8 +304,8 @@ public class DashboardService : IDashboardService
         List<int>? sucursalIds = null,
         string? ambiente = null)
     {
-        fechaInicio ??= DateTime.UtcNow.AddDays(-30);
-        fechaFin ??= DateTime.UtcNow;
+        fechaInicio = FechaHelper.ToUtc(fechaInicio ?? DateTime.UtcNow.AddDays(-30));
+        fechaFin = FechaHelper.ToUtc(fechaFin ?? DateTime.UtcNow);
 
         var query = _context.FacturaDetalles
             .AsNoTracking()
@@ -389,6 +390,9 @@ public class DashboardService : IDashboardService
         List<int>? sucursalIds = null,
         string? ambiente = null)
     {
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
+
         var query = _context.Facturas
             .AsNoTracking()
             .Include(f => f.Sucursal)
@@ -464,8 +468,8 @@ public class DashboardService : IDashboardService
 
         if (fechaAnteriorInicio.HasValue && fechaAnteriorFin.HasValue)
         {
-            periodoAntInicio = fechaAnteriorInicio.Value;
-            periodoAntFin = fechaAnteriorFin.Value;
+            periodoAntInicio = FechaHelper.ToUtc(fechaAnteriorInicio.Value);
+            periodoAntFin = FechaHelper.ToUtc(fechaAnteriorFin.Value);
         }
         else
         {
@@ -515,8 +519,8 @@ public class DashboardService : IDashboardService
         string? ambiente = null)
     {
         // Valores por defecto: últimos 30 días
-        fechaDesde ??= DateTime.UtcNow.AddDays(-30);
-        fechaHasta ??= DateTime.UtcNow;
+        fechaDesde = FechaHelper.ToUtc(fechaDesde ?? DateTime.UtcNow.AddDays(-30));
+        fechaHasta = FechaHelper.ToUtc(fechaHasta ?? DateTime.UtcNow);
 
         var query = _context.Facturas
             .AsNoTracking()
