@@ -17,6 +17,7 @@ public class AgingService : IAgingService
         var hoy = DateTime.UtcNow.Date;
 
         var planes = await _ctx.Set<PlanCuotas>()
+            .AsNoTracking()
             .Include(p => p.Cuotas)
             .Include(p => p.Receptor)
             .Where(p => p.Activo && p.EmisorId == emisorId && p.SaldoAdeudado > 0)

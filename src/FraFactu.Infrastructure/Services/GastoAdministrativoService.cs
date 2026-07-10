@@ -34,6 +34,7 @@ public class GastoAdministrativoService : IGastoAdministrativoService
         hasta = FechaHelper.ToUtc(hasta);
 
         var query = _context.GastosAdministrativos
+            .AsNoTracking()
             .Include(g => g.TipoGasto)
             .Include(g => g.CompraExterna)
                 .ThenInclude(c => c.Proveedor)
@@ -112,6 +113,7 @@ public class GastoAdministrativoService : IGastoAdministrativoService
         hasta = FechaHelper.ToUtc(hasta);
 
         var query = _context.GastosAdministrativos
+            .AsNoTracking()
             .Include(g => g.CompraExterna)
             .Where(g => g.CompraExterna.Estado == "CONFIRMADA")
             .Where(g => g.CompraExterna.FechaEmision >= desde && g.CompraExterna.FechaEmision <= hasta);
@@ -133,6 +135,7 @@ public class GastoAdministrativoService : IGastoAdministrativoService
         hasta = FechaHelper.ToUtc(hasta);
 
         var gastos = await _context.GastosAdministrativos
+            .AsNoTracking()
             .Include(g => g.TipoGasto)
             .Include(g => g.CompraExterna)
             .Where(g => g.CompraExterna.Estado == "CONFIRMADA")
@@ -150,6 +153,7 @@ public class GastoAdministrativoService : IGastoAdministrativoService
         hasta = FechaHelper.ToUtc(hasta);
 
         var gastos = await _context.GastosAdministrativos
+            .AsNoTracking()
             .Include(g => g.CompraExterna)
             .Where(g => g.CompraExterna.Estado == "CONFIRMADA")
             .Where(g => g.CompraExterna.FechaEmision >= desde && g.CompraExterna.FechaEmision <= hasta)

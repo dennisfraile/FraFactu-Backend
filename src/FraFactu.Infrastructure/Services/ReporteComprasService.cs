@@ -29,6 +29,7 @@ public class ReporteComprasService : IReporteComprasService
         hasta = AsUtc(hasta);
 
         var compras = await _context.ComprasExternas
+            .AsNoTracking()
             .Include(c => c.Proveedor)
             .Where(c => c.Proveedor.EmisorId == emisorId
                 && c.Estado == "CONFIRMADA"
@@ -288,6 +289,7 @@ public class ReporteComprasService : IReporteComprasService
         hasta = AsUtc(hasta);
 
         var compras = await _context.ComprasExternas
+            .AsNoTracking()
             .Include(c => c.Proveedor)
             .Where(c => c.Proveedor.EmisorId == emisorId
                 && c.Estado == "CONFIRMADA"
@@ -385,6 +387,7 @@ public class ReporteComprasService : IReporteComprasService
         var hasta = desde.AddMonths(1).AddDays(-1);
 
         var resumen = await _context.ComprasExternas
+            .AsNoTracking()
             .Include(c => c.Proveedor)
             .Where(c => c.Proveedor.EmisorId == emisorId
                 && c.Estado == "CONFIRMADA"
@@ -477,6 +480,7 @@ public class ReporteComprasService : IReporteComprasService
         hasta = AsUtc(hasta);
 
         var query = _context.ComprasExternas
+            .AsNoTracking()
             .Include(c => c.Proveedor)
             .Where(c => c.Proveedor.EmisorId == emisorId
                 && c.Estado == "CONFIRMADA"
@@ -556,6 +560,7 @@ public class ReporteComprasService : IReporteComprasService
 
         // Compras confirmadas en el período
         var compras = await _context.ComprasExternas
+            .AsNoTracking()
             .Include(c => c.Proveedor)
             .Where(c => c.Proveedor.EmisorId == emisorId
                 && c.Estado == "CONFIRMADA"
@@ -578,6 +583,7 @@ public class ReporteComprasService : IReporteComprasService
 
         // DTEs recibidos en el período
         var dtes = await _context.DtesRecibidos
+            .AsNoTracking()
             .Where(d => d.EmisorId == emisorId
                 && d.FechaEmision >= desde
                 && d.FechaEmision <= hasta)
