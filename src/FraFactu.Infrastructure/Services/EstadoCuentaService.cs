@@ -14,6 +14,7 @@ public class EstadoCuentaService : IEstadoCuentaService
     public async Task<EstadoCuentaPlanDto?> GenerarPlanAsync(int planId, int emisorId)
     {
         var plan = await _ctx.Set<PlanCuotas>()
+            .AsNoTracking()
             .Include(p => p.Cuotas).Include(p => p.Receptor).Include(p => p.Emisor)
             .FirstOrDefaultAsync(p => p.Id == planId && p.EmisorId == emisorId);
         if (plan == null) return null;
@@ -24,6 +25,7 @@ public class EstadoCuentaService : IEstadoCuentaService
     public async Task<EstadoCuentaClienteDto?> GenerarClienteAsync(int receptorId, int emisorId)
     {
         var planes = await _ctx.Set<PlanCuotas>()
+            .AsNoTracking()
             .Include(p => p.Cuotas).Include(p => p.Receptor).Include(p => p.Emisor)
             .Where(p => p.EmisorId == emisorId && p.ReceptorId == receptorId && p.Activo)
             .OrderBy(p => p.Id)
@@ -53,6 +55,7 @@ public class EstadoCuentaService : IEstadoCuentaService
         var ids = plan.Cuotas.Where(c => c.FacturaId.HasValue).Select(c => c.FacturaId!.Value).Distinct().ToList();
         if (ids.Count == 0) return new();
         return await _ctx.Set<FacturaElectronica>()
+            .AsNoTracking()
             .Where(f => ids.Contains(f.Id))
             .ToDictionaryAsync(f => f.Id, f => f.CodigoGeneracion);
     }

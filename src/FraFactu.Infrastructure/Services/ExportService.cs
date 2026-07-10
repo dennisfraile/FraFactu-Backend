@@ -23,6 +23,7 @@ public class ExportService : IExportService
         fechaFin = FechaHelper.ToUtc(fechaFin ?? DateTime.UtcNow);
 
         var facturas = await _context.Facturas
+            .AsNoTracking()
             .Include(f => f.Receptor)
             .Where(f => f.FechaEmision >= fechaInicio && f.FechaEmision <= fechaFin)
             .OrderByDescending(f => f.FechaEmision)
@@ -84,6 +85,7 @@ public class ExportService : IExportService
     public async Task<byte[]> ExportarInventarioAExcelAsync()
     {
         var inventario = await _context.StocksBodega
+            .AsNoTracking()
             .Include(s => s.Producto)
             .Include(s => s.Bodega)
             .Select(s => new
@@ -141,6 +143,7 @@ public class ExportService : IExportService
         fechaFin = FechaHelper.ToUtc(fechaFin);
 
         var ventas = await _context.FacturaDetalles
+            .AsNoTracking()
             .Include(d => d.Factura)
             .Include(d => d.Producto)
             .Where(d => d.Factura.FechaEmision >= fechaInicio && d.Factura.FechaEmision <= fechaFin)
@@ -195,29 +198,34 @@ public class ExportService : IExportService
     public async Task<byte[]> GenerarPlantillaProductosExcelAsync(int emisorId)
     {
         var emisor = await _context.Emisores
+            .AsNoTracking()
             .Include(e => e.Departamento)
             .Include(e => e.Municipio)
             .FirstOrDefaultAsync(e => e.Id == emisorId)
             ?? throw new InvalidOperationException("Emisor no encontrado");
 
         var categorias = await _context.Categorias
+            .AsNoTracking()
             .Where(c => c.EmisorId == emisorId && c.Activo)
             .Select(c => c.Nombre)
             .OrderBy(n => n)
             .ToListAsync();
 
         var marcas = await _context.Marcas
+            .AsNoTracking()
             .Where(m => m.EmisorId == emisorId && m.Activa)
             .Select(m => m.Nombre)
             .OrderBy(n => n)
             .ToListAsync();
 
         var unidades = await _context.CatUnidadesMedida
+            .AsNoTracking()
             .OrderBy(u => u.Codigo)
             .Select(u => u.Valor)
             .ToListAsync();
 
         var sucursal = await _context.Sucursales
+            .AsNoTracking()
             .Include(s => s.Departamento)
             .Include(s => s.Municipio)
             .Where(s => s.EmisorId == emisorId && s.Activo)
@@ -342,12 +350,14 @@ public class ExportService : IExportService
     public async Task<byte[]> GenerarPlantillaServiciosExcelAsync(int emisorId, List<int>? sucursalIds = null)
     {
         var emisor = await _context.Emisores
+            .AsNoTracking()
             .Include(e => e.Departamento)
             .Include(e => e.Municipio)
             .FirstOrDefaultAsync(e => e.Id == emisorId)
             ?? throw new InvalidOperationException("Emisor no encontrado");
 
         var categorias = await _context.Categorias
+            .AsNoTracking()
             .Where(c => c.EmisorId == emisorId && c.Activo)
             .Select(c => c.Nombre)
             .OrderBy(n => n)
@@ -355,6 +365,7 @@ public class ExportService : IExportService
 
         // Cargar sucursales: si sucursalIds es null (EmisorAdmin), todas; si tiene valores, solo las del usuario
         var sucursalesQuery = _context.Sucursales
+            .AsNoTracking()
             .Where(s => s.EmisorId == emisorId && s.Activo);
         if (sucursalIds != null && sucursalIds.Count > 0)
             sucursalesQuery = sucursalesQuery.Where(s => sucursalIds.Contains(s.Id));
@@ -365,6 +376,7 @@ public class ExportService : IExportService
             .ToListAsync();
 
         var sucursalEncabezado = await _context.Sucursales
+            .AsNoTracking()
             .Include(s => s.Departamento)
             .Include(s => s.Municipio)
             .Where(s => s.EmisorId == emisorId && s.Activo)
