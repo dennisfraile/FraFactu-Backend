@@ -474,41 +474,44 @@ app.UseCors("DefaultCorsPolicy");
 
 app.UseHttpsRedirection();
 
-// Request Logging Middleware - Para debugging de autenticación
-app.Use(async (context, next) =>
+// Request Logging Middleware - Para debugging de autenticación (solo en Development)
+if (app.Environment.IsDevelopment())
 {
-    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-
-    logger.LogInformation("🌐 [REQUEST] =================================================");
-    logger.LogInformation("🌐 [REQUEST] Incoming HTTP Request");
-    logger.LogInformation("🌐 [REQUEST] Method: {Method}", context.Request.Method);
-    logger.LogInformation("🌐 [REQUEST] Path: {Path}", context.Request.Path);
-    logger.LogInformation("🌐 [REQUEST] QueryString: {QueryString}", context.Request.QueryString);
-    logger.LogInformation("🌐 [REQUEST] Origin: {Origin}", context.Request.Headers.Origin.FirstOrDefault() ?? "Not set");
-
-    // Log Authorization header (sin exponer el token completo)
-    if (context.Request.Headers.ContainsKey("Authorization"))
+    app.Use(async (context, next) =>
     {
-        var authHeader = context.Request.Headers.Authorization.FirstOrDefault() ?? "";
-        if (authHeader.StartsWith("Bearer "))
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+        logger.LogInformation("🌐 [REQUEST] =================================================");
+        logger.LogInformation("🌐 [REQUEST] Incoming HTTP Request");
+        logger.LogInformation("🌐 [REQUEST] Method: {Method}", context.Request.Method);
+        logger.LogInformation("🌐 [REQUEST] Path: {Path}", context.Request.Path);
+        logger.LogInformation("🌐 [REQUEST] QueryString: {QueryString}", context.Request.QueryString);
+        logger.LogInformation("🌐 [REQUEST] Origin: {Origin}", context.Request.Headers.Origin.FirstOrDefault() ?? "Not set");
+
+        // Log Authorization header (sin exponer el token completo)
+        if (context.Request.Headers.ContainsKey("Authorization"))
         {
-            var tokenPrefix = authHeader.Substring(0, Math.Min(40, authHeader.Length));
-            logger.LogInformation("✅ [REQUEST] Authorization header present: {TokenPrefix}...", tokenPrefix);
+            var authHeader = context.Request.Headers.Authorization.FirstOrDefault() ?? "";
+            if (authHeader.StartsWith("Bearer "))
+            {
+                var tokenPrefix = authHeader.Substring(0, Math.Min(40, authHeader.Length));
+                logger.LogInformation("✅ [REQUEST] Authorization header present: {TokenPrefix}...", tokenPrefix);
+            }
+            else
+            {
+                logger.LogWarning("⚠️ [REQUEST] Authorization header present but not Bearer token: {AuthHeader}", authHeader);
+            }
         }
         else
         {
-            logger.LogWarning("⚠️ [REQUEST] Authorization header present but not Bearer token: {AuthHeader}", authHeader);
+            logger.LogWarning("⚠️ [REQUEST] NO Authorization header present");
         }
-    }
-    else
-    {
-        logger.LogWarning("⚠️ [REQUEST] NO Authorization header present");
-    }
 
-    logger.LogInformation("🌐 [REQUEST] =================================================");
+        logger.LogInformation("🌐 [REQUEST] =================================================");
 
-    await next();
-});
+        await next();
+    });
+}
 
 // Compresion HTTP - antes de Caching para que el cache guarde la version comprimida.
 app.UseResponseCompression();
