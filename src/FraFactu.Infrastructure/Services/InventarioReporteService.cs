@@ -39,6 +39,7 @@ public class InventarioReporteService : IInventarioReporteService
         bool sortDesc = false)
     {
         var query = _context.StocksBodega
+            .AsNoTracking()
             .Include(s => s.Producto)
             .Include(s => s.Bodega)
             .ThenInclude(b => b.Sucursal)
@@ -220,6 +221,7 @@ public class InventarioReporteService : IInventarioReporteService
         hasta = FechaHelper.ToUtc(hasta);
 
         var query = _context.MovimientosInventario
+            .AsNoTracking()
             .Include(m => m.Producto)
             .Include(m => m.Bodega)
                 .ThenInclude(b => b.Sucursal)
@@ -379,6 +381,7 @@ public class InventarioReporteService : IInventarioReporteService
         hasta = FechaHelper.ToUtc(hasta);
 
         var query = _context.MovimientosInventario
+            .AsNoTracking()
             .Include(m => m.Bodega)
                 .ThenInclude(b => b.Sucursal)
             .Where(m => m.Bodega!.Sucursal!.EmisorId == emisorId)
@@ -468,6 +471,7 @@ public class InventarioReporteService : IInventarioReporteService
 
         // ✅ LINQ funciona bien - sum simple
         var query = _context.MovimientosInventario
+            .AsNoTracking()
             .Include(m => m.Bodega)
                 .ThenInclude(b => b.Sucursal)
             .Where(m => m.Bodega!.Sucursal!.EmisorId == emisorId)
@@ -479,6 +483,7 @@ public class InventarioReporteService : IInventarioReporteService
         if (sucursalId.HasValue)
         {
             bodegaIds = await _context.Bodegas
+                .AsNoTracking()
                 .Where(b => b.SucursalId == sucursalId.Value)
                 .Select(b => b.Id)
                 .ToListAsync();
@@ -504,6 +509,7 @@ public class InventarioReporteService : IInventarioReporteService
         hasta = FechaHelper.ToUtc(hasta);
 
         var query = _context.MovimientosInventario
+            .AsNoTracking()
             .Include(m => m.Producto)
             .Include(m => m.Bodega)
                 .ThenInclude(b => b.Sucursal)
@@ -515,6 +521,7 @@ public class InventarioReporteService : IInventarioReporteService
         if (sucursalId.HasValue)
         {
             bodegaIds = await _context.Bodegas
+                .AsNoTracking()
                 .Where(b => b.SucursalId == sucursalId.Value)
                 .Select(b => b.Id)
                 .ToListAsync();
@@ -589,6 +596,7 @@ public class InventarioReporteService : IInventarioReporteService
         if (sucursalId.HasValue)
         {
             bodegaIds = await _context.Bodegas
+                .AsNoTracking()
                 .Where(b => b.SucursalId == sucursalId.Value)
                 .Select(b => b.Id)
                 .ToListAsync();
@@ -685,6 +693,7 @@ public class InventarioReporteService : IInventarioReporteService
             .FirstOrDefaultAsync();
 
         var movimientosStats = await _context.MovimientosInventario
+            .AsNoTracking()
             .Include(m => m.Bodega)
                 .ThenInclude(b => b.Sucursal)
             .Where(m => m.Bodega!.Sucursal!.EmisorId == emisorId)
@@ -700,6 +709,7 @@ public class InventarioReporteService : IInventarioReporteService
         var cmvMesActual = await ObtenerCostoMercanciaVendidaAsync(emisorId, inicioMes, finMes);
 
         var valorCompras = await _context.ComprasExternas
+            .AsNoTracking()
             .Include(c => c.Sucursal)
             .Where(c => c.Estado == "CONFIRMADA")
             .Where(c => c.Sucursal.EmisorId == emisorId)
@@ -732,6 +742,7 @@ public class InventarioReporteService : IInventarioReporteService
     {
         // ✅ LINQ funciona bien
         var query = _context.MovimientosInventario
+            .AsNoTracking()
             .Include(m => m.Bodega)
                 .ThenInclude(b => b.Sucursal)
             .Where(m => m.ProductoId == productoId)
