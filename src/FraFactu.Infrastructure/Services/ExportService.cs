@@ -2,6 +2,7 @@ using ClosedXML.Excel;
 using FraFactu.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using FraFactu.Application.Interfaces;
+using FraFactu.Infrastructure.Helpers;
 
 namespace FraFactu.Infrastructure.Services;
 
@@ -18,8 +19,8 @@ public class ExportService : IExportService
 
     public async Task<byte[]> ExportarFacturasAExcelAsync(DateTime? fechaInicio, DateTime? fechaFin)
     {
-        fechaInicio ??= DateTime.UtcNow.AddMonths(-1);
-        fechaFin ??= DateTime.UtcNow;
+        fechaInicio = FechaHelper.ToUtc(fechaInicio ?? DateTime.UtcNow.AddMonths(-1));
+        fechaFin = FechaHelper.ToUtc(fechaFin ?? DateTime.UtcNow);
 
         var facturas = await _context.Facturas
             .Include(f => f.Receptor)
@@ -136,6 +137,9 @@ public class ExportService : IExportService
 
     public async Task<byte[]> ExportarVentasAExcelAsync(DateTime fechaInicio, DateTime fechaFin)
     {
+        fechaInicio = FechaHelper.ToUtc(fechaInicio);
+        fechaFin = FechaHelper.ToUtc(fechaFin);
+
         var ventas = await _context.FacturaDetalles
             .Include(d => d.Factura)
             .Include(d => d.Producto)

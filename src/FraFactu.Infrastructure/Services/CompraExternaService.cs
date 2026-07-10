@@ -6,6 +6,7 @@ using FraFactu.Application.Services;
 using FraFactu.Application.Common;
 using FraFactu.Domain.Entities;
 using FraFactu.Infrastructure.Persistence;
+using FraFactu.Infrastructure.Helpers;
 
 namespace FraFactu.Infrastructure.Services;
 
@@ -726,16 +727,16 @@ public class CompraExternaService : ICompraExternaService
             query = query.Where(c => c.Estado == estado);
 
         if (fechaDesde.HasValue)
-            query = query.Where(c => c.FechaEmision >= fechaDesde.Value);
+            query = query.Where(c => c.FechaEmision >= FechaHelper.ToUtc(fechaDesde.Value));
 
         if (fechaHasta.HasValue)
-            query = query.Where(c => c.FechaEmision <= fechaHasta.Value);
+            query = query.Where(c => c.FechaEmision <= FechaHelper.ToUtc(fechaHasta.Value));
 
         if (fechaRegistroDesde.HasValue)
-            query = query.Where(c => c.FechaRegistro >= fechaRegistroDesde.Value);
+            query = query.Where(c => c.FechaRegistro >= FechaHelper.ToUtc(fechaRegistroDesde.Value));
 
         if (fechaRegistroHasta.HasValue)
-            query = query.Where(c => c.FechaRegistro <= fechaRegistroHasta.Value);
+            query = query.Where(c => c.FechaRegistro <= FechaHelper.ToUtc(fechaRegistroHasta.Value));
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -794,6 +795,9 @@ public class CompraExternaService : ICompraExternaService
 
     public async Task<decimal> ObtenerTotalComprasAsync(DateTime desde, DateTime hasta, int emisorId, int? proveedorId = null, int? sucursalId = null)
     {
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
+
         var query = _context.ComprasExternas
             .Where(c => c.Estado == "CONFIRMADA")
             .Where(c => c.Sucursal.EmisorId == emisorId)
