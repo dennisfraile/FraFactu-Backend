@@ -118,4 +118,24 @@ public class FacturaQueryServiceTests
         result.Should().ContainSingle();
         result[0].NumeroControl.Should().Be("DTE-01-M001P001-000000000000777");
     }
+
+    // Construye el FacturaQueryService directamente (sin pasar por la fachada
+    // FacturaService), probando que el colaborador funciona standalone.
+    private static FacturaQueryService BuildQueryService(ApplicationDbContext ctx) =>
+        new(ctx, Mock.Of<IMapper>(), Mock.Of<ISaldoDteService>());
+
+    [Fact]
+    public async Task QueryService_Directo_GetAllAsync_FiltraPorEmisor()
+    {
+        var ctx = BuildContext();
+        var tipoDocumento = new CatTipoDocumento { Id = 1, Codigo = "01", Valor = "Factura" };
+        ctx.Facturas.Add(Factura(1, "DTE-01-M001P001-000000000000010", "PROCESADO", tipoDocumento));
+        ctx.SaveChanges();
+
+        var result = await BuildQueryService(ctx)
+            .GetAllAsync(new PaginatedRequest { PageNumber = 1, PageSize = 10 }, EmisorId);
+
+        result.Items.Should().ContainSingle();
+        result.TotalCount.Should().Be(1);
+    }
 }
