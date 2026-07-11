@@ -40,7 +40,8 @@ public class FacturaResyncResumenTests
             Mock.Of<ICrossDbCorrelativoService>(),
             Mock.Of<ICorrelativoInicialService>(),
             Mock.Of<ISaldoDteService>(),
-            Mock.Of<ITelemetryService>());
+            Mock.Of<ITelemetryService>(),
+            Mock.Of<IFacturaQueryService>());
     }
 
     private static FacturaElectronica FacturaConItem(decimal totalGravadoResumen, decimal ventaGravadaItem,
