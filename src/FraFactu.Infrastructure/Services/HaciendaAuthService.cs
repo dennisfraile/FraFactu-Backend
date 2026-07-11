@@ -114,11 +114,11 @@ namespace FraFactu.Infrastructure.Services
                 // Verificar que las credenciales no tengan espacios o caracteres extraños
                 if (mhUsuario.Contains(" ") || mhUsuario.Contains("\n"))
                 {
-                    _logger.LogWarning("[AUTH-DEBUG] ⚠️ ADVERTENCIA: MhUsuario contiene espacios o saltos de línea!");
+                    _logger.LogWarning("[AUTH-DEBUG] ADVERTENCIA: MhUsuario contiene espacios o saltos de línea!");
                 }
                 if (mhClaveApiEnc?.Contains("\n") == true || mhClaveApiEnc?.Contains("\r") == true)
                 {
-                    _logger.LogWarning("[AUTH-DEBUG] ⚠️ ADVERTENCIA: MhClaveApi contiene saltos de línea!");
+                    _logger.LogWarning("[AUTH-DEBUG] ADVERTENCIA: MhClaveApi contiene saltos de línea!");
                 }
 
                 var claveApiDesencriptada = DecryptField(mhClaveApiEnc, esProd ? "MhClaveApiProd" : "MhClaveApi");

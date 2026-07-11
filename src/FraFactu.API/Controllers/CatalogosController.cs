@@ -1,5 +1,6 @@
 using FraFactu.Application.Common.Interfaces;
 using FraFactu.Domain.Entities.Catalogos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FraFactu.API.Controllers;
@@ -7,6 +8,7 @@ namespace FraFactu.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
+[Authorize]
 public class CatalogosController : ControllerBase
 {
     private readonly ICatalogoService _service;

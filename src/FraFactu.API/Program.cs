@@ -481,12 +481,12 @@ if (app.Environment.IsDevelopment())
     {
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
 
-        logger.LogInformation("🌐 [REQUEST] =================================================");
-        logger.LogInformation("🌐 [REQUEST] Incoming HTTP Request");
-        logger.LogInformation("🌐 [REQUEST] Method: {Method}", context.Request.Method);
-        logger.LogInformation("🌐 [REQUEST] Path: {Path}", context.Request.Path);
-        logger.LogInformation("🌐 [REQUEST] QueryString: {QueryString}", context.Request.QueryString);
-        logger.LogInformation("🌐 [REQUEST] Origin: {Origin}", context.Request.Headers.Origin.FirstOrDefault() ?? "Not set");
+        logger.LogInformation("[REQUEST] =================================================");
+        logger.LogInformation("[REQUEST] Incoming HTTP Request");
+        logger.LogInformation("[REQUEST] Method: {Method}", context.Request.Method);
+        logger.LogInformation("[REQUEST] Path: {Path}", context.Request.Path);
+        logger.LogInformation("[REQUEST] QueryString: {QueryString}", context.Request.QueryString);
+        logger.LogInformation("[REQUEST] Origin: {Origin}", context.Request.Headers.Origin.FirstOrDefault() ?? "Not set");
 
         // Log Authorization header (sin exponer el token completo)
         if (context.Request.Headers.ContainsKey("Authorization"))
@@ -495,19 +495,19 @@ if (app.Environment.IsDevelopment())
             if (authHeader.StartsWith("Bearer "))
             {
                 var tokenPrefix = authHeader.Substring(0, Math.Min(40, authHeader.Length));
-                logger.LogInformation("✅ [REQUEST] Authorization header present: {TokenPrefix}...", tokenPrefix);
+                logger.LogInformation("[REQUEST] Authorization header present: {TokenPrefix}...", tokenPrefix);
             }
             else
             {
-                logger.LogWarning("⚠️ [REQUEST] Authorization header present but not Bearer token: {AuthHeader}", authHeader);
+                logger.LogWarning("[REQUEST] Authorization header present but not Bearer token: {AuthHeader}", authHeader);
             }
         }
         else
         {
-            logger.LogWarning("⚠️ [REQUEST] NO Authorization header present");
+            logger.LogWarning("[REQUEST] NO Authorization header present");
         }
 
-        logger.LogInformation("🌐 [REQUEST] =================================================");
+        logger.LogInformation("[REQUEST] =================================================");
 
         await next();
     });
