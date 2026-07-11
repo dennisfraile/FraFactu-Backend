@@ -320,6 +320,23 @@ builder.Services.AddHttpClient("MinisterioHacienda", client =>
     client.Timeout = TimeSpan.FromMinutes(5);
 });
 
+// Versionado de API (no-breaking): versión default v1.0 asumida cuando el
+// cliente no la especifica. Las rutas api/[controller] no cambian; la versión
+// se puede pedir por header "X-Api-Version" o query "api-version".
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = Asp.Versioning.ApiVersionReader.Combine(
+        new Asp.Versioning.HeaderApiVersionReader("X-Api-Version"),
+        new Asp.Versioning.QueryStringApiVersionReader("api-version"));
+})
+.AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+});
+
 // Controllers y FluentValidation
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
