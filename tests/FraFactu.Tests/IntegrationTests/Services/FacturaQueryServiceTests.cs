@@ -130,12 +130,17 @@ public class FacturaQueryServiceTests
         var ctx = BuildContext();
         var tipoDocumento = new CatTipoDocumento { Id = 1, Codigo = "01", Valor = "Factura" };
         ctx.Facturas.Add(Factura(1, "DTE-01-M001P001-000000000000010", "PROCESADO", tipoDocumento));
+        // Factura de OTRO emisor: no debe aparecer (prueba el filtro por emisor).
+        var otra = Factura(2, "DTE-01-M001P001-000000000000020", "PROCESADO", tipoDocumento);
+        otra.EmisorId = 999;
+        ctx.Facturas.Add(otra);
         ctx.SaveChanges();
 
         var result = await BuildQueryService(ctx)
             .GetAllAsync(new PaginatedRequest { PageNumber = 1, PageSize = 10 }, EmisorId);
 
         result.Items.Should().ContainSingle();
+        result.Items[0].NumeroControl.Should().Be("DTE-01-M001P001-000000000000010");
         result.TotalCount.Should().Be(1);
     }
 }
