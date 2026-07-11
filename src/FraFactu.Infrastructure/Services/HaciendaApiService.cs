@@ -101,7 +101,7 @@ namespace FraFactu.Infrastructure.Services
             // Verificar que el token no contenga espacios o caracteres extraños
             if (token.Contains(" ") || token.Contains("\n") || token.Contains("\r"))
             {
-                _logger.LogWarning("[HACIENDA-DEBUG] ⚠️ ADVERTENCIA: El token contiene espacios en blanco o saltos de línea!");
+                _logger.LogWarning("[HACIENDA-DEBUG] ADVERTENCIA: El token contiene espacios en blanco o saltos de línea!");
             }
 
             // 3. Serializar DTE a JSON
@@ -239,7 +239,7 @@ namespace FraFactu.Infrastructure.Services
 
             if (resultado != null)
             {
-                _logger.LogInformation("📋 DATOS DE LA RESPUESTA:");
+                _logger.LogInformation("DATOS DE LA RESPUESTA:");
                 _logger.LogInformation("   ├─ Version: {Version}", resultado.Version);
                 _logger.LogInformation("   ├─ Ambiente: {Ambiente}", resultado.Ambiente);
                 _logger.LogInformation("   ├─ VersionApp: {VersionApp}", resultado.VersionApp);
@@ -253,7 +253,7 @@ namespace FraFactu.Infrastructure.Services
 
                 if (resultado.Observaciones != null && resultado.Observaciones.Any())
                 {
-                    _logger.LogWarning("⚠️ OBSERVACIONES DE HACIENDA:");
+                    _logger.LogWarning("OBSERVACIONES DE HACIENDA:");
                     for (int i = 0; i < resultado.Observaciones.Count; i++)
                     {
                         _logger.LogWarning("   [{Index}] {Observacion}", i + 1, resultado.Observaciones[i]);
@@ -261,28 +261,28 @@ namespace FraFactu.Infrastructure.Services
                 }
                 else
                 {
-                    _logger.LogInformation("✅ Sin observaciones");
+                    _logger.LogInformation("Sin observaciones");
                 }
 
                 // Log adicional según el estado
                 if (resultado.Estado == "PROCESADO")
                 {
-                    _logger.LogInformation("✅ ✅ ✅ FACTURA PROCESADA EXITOSAMENTE ✅ ✅ ✅");
+                    _logger.LogInformation("FACTURA PROCESADA EXITOSAMENTE");
                 }
                 else if (resultado.Estado == "RECHAZADO")
                 {
-                    _logger.LogError("❌ ❌ ❌ FACTURA RECHAZADA POR HACIENDA ❌ ❌ ❌");
-                    _logger.LogError("🔴 Código: {CodigoMsg} - {DescripcionMsg}",
+                    _logger.LogError("FACTURA RECHAZADA POR HACIENDA");
+                    _logger.LogError("Código: {CodigoMsg} - {DescripcionMsg}",
                         resultado.CodigoMsg, resultado.DescripcionMsg);
                 }
                 else
                 {
-                    _logger.LogWarning("⚠️ Estado desconocido: {Estado}", resultado.Estado);
+                    _logger.LogWarning("Estado desconocido: {Estado}", resultado.Estado);
                 }
             }
             else
             {
-                _logger.LogError("❌ No se pudo deserializar la respuesta de Hacienda");
+                _logger.LogError("No se pudo deserializar la respuesta de Hacienda");
             }
 
             _logger.LogInformation("=== FIN TRANSMISIÓN DTE ===");

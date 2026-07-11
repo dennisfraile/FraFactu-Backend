@@ -134,7 +134,7 @@ namespace FraFactu.API.Controllers
 
                 if (string.IsNullOrEmpty(emisorIdClaim))
                 {
-                    _logger.LogError("[EMISOR CONTROLLER] ❌ EmisorId claim not found in JWT token");
+                    _logger.LogError("[EMISOR CONTROLLER] EmisorId claim not found in JWT token");
                     _logger.LogError("[EMISOR CONTROLLER] This usually means the user was created before auto-Emisor feature was implemented");
                     return Unauthorized(new
                     {
@@ -145,7 +145,7 @@ namespace FraFactu.API.Controllers
 
                 if (!int.TryParse(emisorIdClaim, out int emisorId))
                 {
-                    _logger.LogError("[EMISOR CONTROLLER] ❌ EmisorId claim value is not a valid integer: {EmisorIdClaim}", emisorIdClaim);
+                    _logger.LogError("[EMISOR CONTROLLER] EmisorId claim value is not a valid integer: {EmisorIdClaim}", emisorIdClaim);
                     return Unauthorized(new { error = "EmisorId inválido en el token" });
                 }
 
@@ -155,16 +155,16 @@ namespace FraFactu.API.Controllers
 
                 if (emisor == null)
                 {
-                    _logger.LogWarning("[EMISOR CONTROLLER] ❌ Emisor profile not found for Id: {EmisorId}", emisorId);
+                    _logger.LogWarning("[EMISOR CONTROLLER] Emisor profile not found for Id: {EmisorId}", emisorId);
                     return NotFound(new { error = "Perfil de emisor no encontrado" });
                 }
 
-                _logger.LogInformation("[EMISOR CONTROLLER] ✅ Profile retrieved successfully for Emisor: {EmisorNombre}", emisor.NombreRazonSocial);
+                _logger.LogInformation("[EMISOR CONTROLLER] Profile retrieved successfully for Emisor: {EmisorNombre}", emisor.NombreRazonSocial);
                 return Ok(emisor);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[EMISOR CONTROLLER] ❌ Unexpected error in GetMiPerfil");
+                _logger.LogError(ex, "[EMISOR CONTROLLER] Unexpected error in GetMiPerfil");
                 return StatusCode(500, new { error = "Error interno del servidor", detail = ex.Message });
             }
         }

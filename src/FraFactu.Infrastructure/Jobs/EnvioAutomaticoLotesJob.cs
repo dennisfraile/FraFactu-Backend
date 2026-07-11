@@ -104,13 +104,13 @@ public class EnvioAutomaticoLotesJob
                 await facturaService.EnviarFacturaIndividualAsync(factura.Id);
                 exitosas++;
 
-                _logger.LogInformation("[JOB-ENVIO-AUTO] ✅ Factura {NumeroControl} enviada exitosamente",
+                _logger.LogInformation("[JOB-ENVIO-AUTO] Factura {NumeroControl} enviada exitosamente",
                     factura.NumeroControl);
             }
             catch (Exception ex)
             {
                 fallidas++;
-                _logger.LogError(ex, "[JOB-ENVIO-AUTO] ❌ Error enviando factura {NumeroControl} (ID: {FacturaId})",
+                _logger.LogError(ex, "[JOB-ENVIO-AUTO] Error enviando factura {NumeroControl} (ID: {FacturaId})",
                     factura.NumeroControl, factura.Id);
                 // Continuar con la siguiente factura
             }
