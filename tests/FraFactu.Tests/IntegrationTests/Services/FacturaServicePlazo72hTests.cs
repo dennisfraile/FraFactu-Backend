@@ -44,7 +44,8 @@ public class FacturaServicePlazo72hTests
             Mock.Of<ICrossDbCorrelativoService>(),
             Mock.Of<ICorrelativoInicialService>(),
             Mock.Of<ISaldoDteService>(),
-            Mock.Of<ITelemetryService>());
+            Mock.Of<ITelemetryService>(),
+            Mock.Of<IFacturaQueryService>());
 
     /// <summary>Evento de contingencia con sello a las "selloHaceHoras" horas atrás (o sin sello si null).</summary>
     private static EventoContingencia Evento(int id, double? selloHaceHoras)

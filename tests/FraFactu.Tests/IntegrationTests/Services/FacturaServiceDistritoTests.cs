@@ -44,7 +44,8 @@ public class FacturaServiceDistritoTests
             Mock.Of<ICrossDbCorrelativoService>(),
             Mock.Of<ICorrelativoInicialService>(),
             Mock.Of<ISaldoDteService>(),
-            Mock.Of<ITelemetryService>());
+            Mock.Of<ITelemetryService>(),
+            Mock.Of<IFacturaQueryService>());
 
     private static void SeedDistritos(ApplicationDbContext ctx)
     {

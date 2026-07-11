@@ -30,12 +30,18 @@ public class FacturaQueryServiceTests
             .UseInMemoryDatabase($"FacturaQuery_{Guid.NewGuid()}")
             .Options);
 
-    // Construye el FacturaService ACTUAL (fachada). En Task 2 se le añade el
-    // Mock.Of<IFacturaQueryService>() como último argumento.
-    private static FacturaService BuildFacturaService(ApplicationDbContext ctx) =>
-        new(
+    // Construye el FacturaService (fachada) delegando a un FacturaQueryService REAL
+    // (mismo ctx/mapper/saldoDteService) — Task 2 prueba la equivalencia vía delegación:
+    // estos mismos tests deben seguir en verde llamando a través de la fachada.
+    private static FacturaService BuildFacturaService(ApplicationDbContext ctx)
+    {
+        var mapper = Mock.Of<IMapper>();
+        var saldoDteService = Mock.Of<ISaldoDteService>();
+        var queryService = new FacturaQueryService(ctx, mapper, saldoDteService);
+
+        return new FacturaService(
             ctx,
-            Mock.Of<IMapper>(),
+            mapper,
             Mock.Of<IInventarioIntegrationService>(),
             Mock.Of<IHaciendaApiService>(),
             Mock.Of<IHaciendaRetryService>(),
@@ -46,8 +52,10 @@ public class FacturaQueryServiceTests
             Mock.Of<IEmailService>(),
             Mock.Of<ICrossDbCorrelativoService>(),
             Mock.Of<ICorrelativoInicialService>(),
-            Mock.Of<ISaldoDteService>(),
-            Mock.Of<ITelemetryService>());
+            saldoDteService,
+            Mock.Of<ITelemetryService>(),
+            queryService);
+    }
 
     // Nota de seeding (Task 1): el InMemory provider de EF Core lanza un conflicto de
     // identidad si se agregan varias instancias de CatTipoDocumento con el mismo Id al
