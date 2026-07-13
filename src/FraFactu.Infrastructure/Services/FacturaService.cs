@@ -37,6 +37,7 @@ namespace FraFactu.Infrastructure.Services
         private readonly ITelemetryService _telemetry;
         private readonly IFacturaQueryService _queryService;
         private readonly IDteJsonBuilder _dteJsonBuilder;
+        private readonly IFacturaLoteSync _loteSync;
 
         public FacturaService(
             ApplicationDbContext context,
@@ -54,7 +55,8 @@ namespace FraFactu.Infrastructure.Services
             ISaldoDteService saldoDteService,
             ITelemetryService telemetry,
             IFacturaQueryService queryService,
-            IDteJsonBuilder dteJsonBuilder)
+            IDteJsonBuilder dteJsonBuilder,
+            IFacturaLoteSync loteSync)
         {
             _context = context;
             _mapper = mapper;
@@ -72,6 +74,7 @@ namespace FraFactu.Infrastructure.Services
             _telemetry = telemetry;
             _queryService = queryService;
             _dteJsonBuilder = dteJsonBuilder;
+            _loteSync = loteSync;
         }
 
         public async Task<FacturaElectronicaResponseDto> CreateAsync(CreateFacturaElectronicaDto dto, int emisorId)
@@ -823,7 +826,7 @@ namespace FraFactu.Infrastructure.Services
 
                                 factura.EstadoHacienda = "RECHAZADO";
                                 factura.Observaciones = "MH respondió PROCESADO pero no devolvió sello de recepción";
-                                await SincronizarLoteDetalleAsync(factura, factura.Observaciones);
+                                await _loteSync.SincronizarLoteDetalleAsync(factura, factura.Observaciones);
                                 await _context.SaveChangesAsync();
 
                                 _telemetry.TrackEvent("smartix.factura.rechazada_mh",
@@ -849,7 +852,7 @@ namespace FraFactu.Infrastructure.Services
                             factura.JsonFirmado = respuestaMh.DocumentoFirmado;
                             factura.FechaTransmision = DateTime.UtcNow.Date;
                             factura.HoraTransmision = DateTime.UtcNow.TimeOfDay;
-                            await SincronizarLoteDetalleAsync(factura);
+                            await _loteSync.SincronizarLoteDetalleAsync(factura);
                             await _context.SaveChangesAsync();
 
                             // SALDO DTE: Inicializar saldo para DTEs que pueden recibir NC (03, 07)
@@ -904,7 +907,7 @@ namespace FraFactu.Infrastructure.Services
 
                             factura.EstadoHacienda = "RECHAZADO";
                             factura.Observaciones = observaciones;
-                            await SincronizarLoteDetalleAsync(factura, observaciones);
+                            await _loteSync.SincronizarLoteDetalleAsync(factura, observaciones);
                             await _context.SaveChangesAsync();
 
                             _telemetry.TrackEvent("smartix.factura.rechazada_mh",
@@ -2536,7 +2539,7 @@ namespace FraFactu.Infrastructure.Services
 
                             factura.EstadoHacienda = "RECHAZADO";
                             factura.Observaciones = "MH respondió PROCESADO pero no devolvió sello de recepción";
-                            await SincronizarLoteDetalleAsync(factura, factura.Observaciones);
+                            await _loteSync.SincronizarLoteDetalleAsync(factura, factura.Observaciones);
                             await _context.SaveChangesAsync();
                             break;
                         }
@@ -2554,7 +2557,7 @@ namespace FraFactu.Infrastructure.Services
                         factura.JsonFirmado = resultado.DocumentoFirmado;
                         factura.FechaTransmision = DateTime.UtcNow.Date;
                         factura.HoraTransmision = DateTime.UtcNow.TimeOfDay;
-                        await SincronizarLoteDetalleAsync(factura);
+                        await _loteSync.SincronizarLoteDetalleAsync(factura);
                         await _context.SaveChangesAsync();
 
                         await IntentarEnviarEmailDteAsync(factura.Id, factura.ReceptorId == 0 ? null : (int?)factura.ReceptorId);
@@ -2582,7 +2585,7 @@ namespace FraFactu.Infrastructure.Services
 
                         factura.EstadoHacienda = "RECHAZADO";
                         factura.Observaciones = motivo;
-                        await SincronizarLoteDetalleAsync(factura, motivo);
+                        await _loteSync.SincronizarLoteDetalleAsync(factura, motivo);
                         await _context.SaveChangesAsync();
 
                         throw new InvalidOperationException($"Factura rechazada o fallida: {motivo}");
@@ -2962,62 +2965,6 @@ namespace FraFactu.Infrastructure.Services
             // OtrosDocumentos, VentaTerceros cascadean por FK CASCADE).
             _context.Facturas.Remove(factura);
             await _context.SaveChangesAsync();
-        }
-
-        // ==========================================
-        // HELPERS - SINCRONIZACIÓN DE LOTE
-        // ==========================================
-
-        /// <summary>
-        /// Sincroniza el LoteDetalle y Lote cuando una factura cambia de estado
-        /// fuera del flujo normal de lote (ej: envío individual).
-        /// NO llama SaveChangesAsync — el caller debe guardar.
-        /// </summary>
-        private async Task SincronizarLoteDetalleAsync(FacturaElectronica factura, string? motivoRechazo = null)
-        {
-            if (factura.LoteId == null) return;
-
-            var loteId = factura.LoteId.Value;
-            var loteDetalle = await _context.LoteDetalles
-                .FirstOrDefaultAsync(d => d.FacturaElectronicaId == factura.Id && d.LoteId == loteId);
-
-            if (loteDetalle == null) return;
-
-            if (factura.EstadoHacienda == "PROCESADO")
-            {
-                loteDetalle.EstadoDte = "PROCESADO";
-                loteDetalle.SelloRecibido = factura.SelloRecibido;
-                loteDetalle.FechaConsulta = DateTime.UtcNow;
-            }
-            else if (factura.EstadoHacienda == "RECHAZADO")
-            {
-                loteDetalle.EstadoDte = "RECHAZADO";
-                loteDetalle.FechaConsulta = DateTime.UtcNow;
-                loteDetalle.ObservacionesRechazo = motivoRechazo;
-                factura.LoteId = null;
-            }
-
-            var lote = await _context.Lotes
-                .Include(l => l.Detalles)
-                .FirstOrDefaultAsync(l => l.Id == loteId);
-
-            if (lote != null)
-            {
-                lote.TotalAprobados = lote.Detalles.Count(d => d.SelloRecibido != null);
-                lote.TotalRechazados = lote.Detalles.Count(d => d.EstadoDte == "RECHAZADO");
-                lote.TotalPendientes = lote.TotalDtes - lote.TotalAprobados - lote.TotalRechazados;
-                lote.FechaUltimaConsulta = DateTime.UtcNow;
-                lote.FechaModificacion = DateTime.UtcNow;
-
-                if (lote.TotalPendientes <= 0 && lote.Estado != "Procesado")
-                {
-                    lote.Estado = "Procesado";
-                }
-            }
-
-            _logger.LogInformation(
-                "[LOTE-SYNC] Sincronizado LoteDetalle para factura {FacturaId} en lote {LoteId}: EstadoDte={Estado}",
-                factura.Id, loteId, loteDetalle.EstadoDte);
         }
 
         // ==========================================

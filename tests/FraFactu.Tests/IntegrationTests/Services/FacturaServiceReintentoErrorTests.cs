@@ -46,7 +46,8 @@ public class FacturaServiceReintentoErrorTests
             Mock.Of<ISaldoDteService>(),
             Mock.Of<ITelemetryService>(),
             Mock.Of<IFacturaQueryService>(),
-            new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance));
+            new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance),
+            new FacturaLoteSync(ctx, NullLogger<FacturaLoteSync>.Instance));
 
     private static FacturaElectronica NuevaFactura(int id, string estado, int intentos,
         DateTime? fechaError)

@@ -205,6 +205,7 @@ builder.Services.AddScoped<IReceptorService, FraFactu.Infrastructure.Services.Re
 builder.Services.AddSingleton<ICrossDbCorrelativoService, FraFactu.Infrastructure.Services.CrossDbCorrelativoService>();
 builder.Services.AddScoped<IFacturaQueryService, FraFactu.Infrastructure.Services.FacturaQueryService>();
 builder.Services.AddScoped<IDteJsonBuilder, FraFactu.Infrastructure.Services.DteJsonBuilder>();
+builder.Services.AddScoped<IFacturaLoteSync, FraFactu.Infrastructure.Services.FacturaLoteSync>();
 builder.Services.AddScoped<IFacturaService, FraFactu.Infrastructure.Services.FacturaService>();
 builder.Services.AddScoped<FraFactu.Application.Interfaces.IFacturacionCuotaStrategy, FraFactu.Application.Services.FacturacionCuotaStrategy>();
 builder.Services.AddScoped<FraFactu.Application.Interfaces.IMoraService, FraFactu.Application.Services.MoraService>();

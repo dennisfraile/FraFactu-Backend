@@ -55,7 +55,8 @@ public class FacturaQueryServiceTests
             saldoDteService,
             Mock.Of<ITelemetryService>(),
             queryService,
-            new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance));
+            new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance),
+            new FacturaLoteSync(ctx, NullLogger<FacturaLoteSync>.Instance));
     }
 
     // Nota de seeding (Task 1): el InMemory provider de EF Core lanza un conflicto de
