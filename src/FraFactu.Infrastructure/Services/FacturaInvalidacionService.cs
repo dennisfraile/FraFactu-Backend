@@ -22,7 +22,6 @@ namespace FraFactu.Infrastructure.Services
         private readonly ISaldoDteService _saldoDteService;
         private readonly IEmailService _emailService;
         private readonly ILogger<FacturaInvalidacionService> _logger;
-        private readonly IFacturaLoteSync _loteSync;
 
         public FacturaInvalidacionService(
             ApplicationDbContext context,
@@ -30,8 +29,7 @@ namespace FraFactu.Infrastructure.Services
             IInventarioIntegrationService inventarioService,
             ISaldoDteService saldoDteService,
             IEmailService emailService,
-            ILogger<FacturaInvalidacionService> logger,
-            IFacturaLoteSync loteSync)
+            ILogger<FacturaInvalidacionService> logger)
         {
             _context = context;
             _haciendaApiService = haciendaApiService;
@@ -39,7 +37,6 @@ namespace FraFactu.Infrastructure.Services
             _saldoDteService = saldoDteService;
             _emailService = emailService;
             _logger = logger;
-            _loteSync = loteSync;
         }
 
         public async Task<bool> AnularAsync(int facturaId, int emisorId, string motivo)

@@ -42,8 +42,7 @@ public class FacturaInvalidacionServiceTests
             Mock.Of<IInventarioIntegrationService>(),
             Mock.Of<ISaldoDteService>(),
             Mock.Of<IEmailService>(),
-            NullLogger<FacturaInvalidacionService>.Instance,
-            loteSync);
+            NullLogger<FacturaInvalidacionService>.Instance);
 
         return new FacturaService(
             ctx,
