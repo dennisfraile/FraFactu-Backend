@@ -42,7 +42,9 @@ public class FacturaResyncResumenTests
             Mock.Of<ISaldoDteService>(),
             Mock.Of<ITelemetryService>(),
             Mock.Of<IFacturaQueryService>(),
-            new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance));
+            new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance),
+            new FacturaLoteSync(ctx, NullLogger<FacturaLoteSync>.Instance),
+            Mock.Of<IFacturaInvalidacionService>());
     }
 
     private static FacturaElectronica FacturaConItem(decimal totalGravadoResumen, decimal ventaGravadaItem,
