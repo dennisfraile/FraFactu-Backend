@@ -660,4 +660,32 @@ public class FacturaServiceDteV2Tests
 
         totalGravada.Should().Be(100.12m);
     }
+
+    // ─────────────────────────────────── Golden master (Fase 2 refactor FacturaService) ───────────────────────────────────
+
+    // Normaliza el GUID de codigoGeneracion para que el snapshot sea estable.
+    private static string NormalizarCodigoGeneracion(string json)
+    {
+        var root = JsonDocument.Parse(json).RootElement;
+        // Reemplaza el valor de "codigoGeneracion" (aparece en identificacion) por un placeholder fijo.
+        var cg = root.GetProperty("identificacion").GetProperty("codigoGeneracion").GetString();
+        return cg == null ? json : json.Replace(cg, "00000000-0000-0000-0000-000000000000");
+    }
+
+    [Fact]
+    public async Task GoldenMaster_FE_JsonByteIdentico()
+    {
+        var ctx = BuildContext();
+        SeedFactura(ctx, "01", version: 1, receptorConDistrito: true);
+        var json = await BuildService(ctx).GenerateJsonDteAsync(FacturaId, EmisorId);
+        var normalizado = NormalizarCodigoGeneracion(json);
+
+        // EXPECTED capturado ejecutando el test contra el código actual (baseline Fase 2).
+        // Único campo no determinista normalizado: identificacion.codigoGeneracion (ver
+        // NormalizarCodigoGeneracion). El resto del JSON es estable para esta semilla fija.
+        const string EXPECTED = """
+        {"identificacion":{"version":1,"ambiente":"00","tipoDte":"01","numeroControl":"DTE-01-M001P001-000000000000001","codigoGeneracion":"00000000-0000-0000-0000-000000000000","tipoModelo":1,"tipoOperacion":1,"tipoContingencia":null,"motivoContin":null,"fecEmi":"2026-05-28","horEmi":"10:30:00","tipoMoneda":"USD"},"documentoRelacionado":null,"emisor":{"nit":"06140506141011","nrc":"1234567","nombre":"EMPRESA DE PRUEBAS SA DE CV","codActividad":"47111","descActividad":"Venta al por menor en comercios no especializados","nombreComercial":"PRUEBAS SA","direccion":{"departamento":"06","municipio":"0614","distrito":"13","complemento":"Colonia Escal\u00F3n"},"telefono":"22223333","correo":"test@empresa.com","codEstable":"0001","codPuntoVenta":"P001"},"receptor":{"tipoDocumento":"36","numDocumento":"06141804941020","nrc":"9876543","nombre":"CLIENTE EMPRESARIAL SA DE CV","codActividad":"47190","descActividad":"Venta al por menor en otros comercios","direccion":{"departamento":"06","municipio":"0614","distrito":"13","complemento":"Avenida Norte"},"telefono":"22224444","correo":"cliente@correo.com"},"otrosDocumentos":null,"ventaTercero":null,"cuerpoDocumento":[{"numItem":1,"tipoItem":1,"numeroDocumento":null,"cantidad":1,"codigo":"PROD001","codTributo":null,"uniMedida":59,"descripcion":"Producto de prueba","precioUni":100,"montoDescu":0,"ventaNoSuj":0,"ventaExenta":0,"ventaGravada":100,"tributos":["20"],"psv":0.00,"noGravado":0,"ivaItem":13}],"resumen":{"totalNoSuj":0,"totalExenta":0,"totalGravada":100,"subTotalVentas":100,"descuNoSuj":0,"descuExenta":0,"descuGravada":0,"porcentajeDescuento":0,"totalDescu":0,"tributos":null,"subTotal":100,"ivaRete":0,"montoTotalOperacion":113,"totalNoGravado":0,"totalPagar":113,"totalLetras":"CIENTO TRECE 00/100","totalIva":13,"saldoFavor":0,"condicionOperacion":1,"pagos":[{"codigo":"01","montoPago":113,"referencia":null,"plazo":null,"periodo":null}],"numPagoElectronico":null,"observaciones":"OBSERVACION DE PRUEBA"},"apendice":null}
+        """;
+        normalizado.Should().Be(EXPECTED);
+    }
 }
