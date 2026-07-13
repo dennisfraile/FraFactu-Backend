@@ -31,7 +31,8 @@ public class ValidarDireccionReceptorAsyncTests
             Mock.Of<ICorrelativoInicialService>(),
             Mock.Of<ISaldoDteService>(),
             Mock.Of<ITelemetryService>(),
-            Mock.Of<IFacturaQueryService>());
+            Mock.Of<IFacturaQueryService>(),
+            new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance));
 
     private static void SeedReceptor(ApplicationDbContext ctx, int id, int? depId, int? muniId, int? disId, string? direccion)
     {

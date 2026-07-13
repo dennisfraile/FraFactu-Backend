@@ -45,7 +45,8 @@ public class FacturaServicePlazo72hTests
             Mock.Of<ICorrelativoInicialService>(),
             Mock.Of<ISaldoDteService>(),
             Mock.Of<ITelemetryService>(),
-            Mock.Of<IFacturaQueryService>());
+            Mock.Of<IFacturaQueryService>(),
+            new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance));
 
     /// <summary>Evento de contingencia con sello a las "selloHaceHoras" horas atrás (o sin sello si null).</summary>
     private static EventoContingencia Evento(int id, double? selloHaceHoras)

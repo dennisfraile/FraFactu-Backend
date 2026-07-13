@@ -45,7 +45,8 @@ public class FacturaServiceDistritoTests
             Mock.Of<ICorrelativoInicialService>(),
             Mock.Of<ISaldoDteService>(),
             Mock.Of<ITelemetryService>(),
-            Mock.Of<IFacturaQueryService>());
+            Mock.Of<IFacturaQueryService>(),
+            new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance));
 
     private static void SeedDistritos(ApplicationDbContext ctx)
     {

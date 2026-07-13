@@ -53,7 +53,8 @@ public class FacturaServiceDteV2Tests
             Mock.Of<ICorrelativoInicialService>(),
             Mock.Of<ISaldoDteService>(),
             Mock.Of<ITelemetryService>(),
-            Mock.Of<IFacturaQueryService>());
+            Mock.Of<IFacturaQueryService>(),
+            new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance));
 
     /// <summary>
     /// Construye un grafo completo de Factura listo para generar el JSON DTE.
