@@ -55,7 +55,8 @@ public class FacturaServiceDteV2Tests
             Mock.Of<ITelemetryService>(),
             Mock.Of<IFacturaQueryService>(),
             new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance),
-            new FacturaLoteSync(ctx, NullLogger<FacturaLoteSync>.Instance));
+            new FacturaLoteSync(ctx, NullLogger<FacturaLoteSync>.Instance),
+            Mock.Of<IFacturaInvalidacionService>());
 
     /// <summary>
     /// Construye un grafo completo de Factura listo para generar el JSON DTE.

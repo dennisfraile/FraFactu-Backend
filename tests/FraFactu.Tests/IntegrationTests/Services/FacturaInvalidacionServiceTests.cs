@@ -28,10 +28,24 @@ public class FacturaInvalidacionServiceTests
             .UseInMemoryDatabase($"Invalidacion_{Guid.NewGuid()}")
             .Options);
 
-    // Replica el constructor ACTUAL de FacturaService (16 args). En Task 2 se le añade el
-    // IFacturaLoteSync y en Task 3 el IFacturaInvalidacionService (ambos como últimos args).
-    private static FacturaService BuildFacturaService(ApplicationDbContext ctx) =>
-        new(
+    // Replica el constructor ACTUAL de FacturaService (18 args). Task 2 le añadió el
+    // IFacturaLoteSync y Task 3 el IFacturaInvalidacionService (ambos como últimos args).
+    // Aquí se cablea la implementación REAL de FacturaInvalidacionService (no un mock) para
+    // que estos tests de caracterización prueben la delegación de la fachada, no solo que
+    // exista un método que reenvíe la llamada.
+    private static FacturaService BuildFacturaService(ApplicationDbContext ctx)
+    {
+        var loteSync = new FacturaLoteSync(ctx, NullLogger<FacturaLoteSync>.Instance);
+        var invalidacion = new FacturaInvalidacionService(
+            ctx,
+            Mock.Of<IHaciendaApiService>(),
+            Mock.Of<IInventarioIntegrationService>(),
+            Mock.Of<ISaldoDteService>(),
+            Mock.Of<IEmailService>(),
+            NullLogger<FacturaInvalidacionService>.Instance,
+            loteSync);
+
+        return new FacturaService(
             ctx,
             Mock.Of<IMapper>(),
             Mock.Of<IInventarioIntegrationService>(),
@@ -48,7 +62,9 @@ public class FacturaInvalidacionServiceTests
             Mock.Of<ITelemetryService>(),
             Mock.Of<IFacturaQueryService>(),
             new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance),
-            new FacturaLoteSync(ctx, NullLogger<FacturaLoteSync>.Instance));
+            loteSync,
+            invalidacion);
+    }
 
     private static FacturaElectronica Factura(int id, string estado)
     {
