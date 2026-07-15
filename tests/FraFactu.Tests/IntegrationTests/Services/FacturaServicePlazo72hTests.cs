@@ -1,13 +1,8 @@
-using AutoMapper;
 using FraFactu.Application.Common.Interfaces;
-using FraFactu.Application.Interfaces;
-using FraFactu.Application.Interfaces.Hacienda;
-using FraFactu.Application.Services;
 using FraFactu.Domain.Entities;
 using FraFactu.Infrastructure.Persistence;
 using FraFactu.Infrastructure.Services;
 using FluentAssertions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -29,26 +24,8 @@ public class FacturaServicePlazo72hTests
             .UseInMemoryDatabase($"Plazo72_{Guid.NewGuid()}")
             .Options);
 
-    private static FacturaService BuildService(ApplicationDbContext ctx) =>
-        new(
-            ctx,
-            Mock.Of<IMapper>(),
-            Mock.Of<IInventarioIntegrationService>(),
-            Mock.Of<IHaciendaApiService>(),
-            Mock.Of<IHaciendaRetryService>(),
-            Mock.Of<IEventoContingenciaService>(),
-            Mock.Of<ICurrentUserService>(),
-            Mock.Of<IHttpContextAccessor>(),
-            NullLogger<FacturaService>.Instance,
-            Mock.Of<IEmailService>(),
-            Mock.Of<ICrossDbCorrelativoService>(),
-            Mock.Of<ICorrelativoInicialService>(),
-            Mock.Of<ISaldoDteService>(),
-            Mock.Of<ITelemetryService>(),
-            Mock.Of<IFacturaQueryService>(),
-            new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance),
-            new FacturaLoteSync(ctx, NullLogger<FacturaLoteSync>.Instance),
-            Mock.Of<IFacturaInvalidacionService>());
+    private static FacturaJobsService BuildService(ApplicationDbContext ctx) =>
+        new(ctx, NullLogger<FacturaJobsService>.Instance, Mock.Of<ITelemetryService>());
 
     /// <summary>Evento de contingencia con sello a las "selloHaceHoras" horas atrás (o sin sello si null).</summary>
     private static EventoContingencia Evento(int id, double? selloHaceHoras)
@@ -103,7 +80,7 @@ public class FacturaServicePlazo72hTests
         resultado.NuevasVencidas.Should().Be(1);
 
         var factura = await ctx.Facturas.FindAsync(1);
-        factura!.Observaciones.Should().Contain(FacturaService.MarcaPlazo72hVencido);
+        factura!.Observaciones.Should().Contain(FacturaJobsService.MarcaPlazo72hVencido);
         factura.EstadoHacienda.Should().Be("PENDIENTE_LOTE"); // no se bloquea
     }
 

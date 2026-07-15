@@ -62,7 +62,8 @@ public class FacturaInvalidacionServiceTests
             Mock.Of<IFacturaQueryService>(),
             new DteJsonBuilder(ctx, NullLogger<DteJsonBuilder>.Instance),
             loteSync,
-            invalidacion);
+            invalidacion,
+            Mock.Of<IFacturaJobsService>());
     }
 
     private static FacturaElectronica Factura(int id, string estado)
