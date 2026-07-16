@@ -38,6 +38,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<PaginatedResponse<SuscripcionResponseDto>> GetAllAsync(PaginatedRequest request)
         {
             var query = _context.Suscripciones
+                .AsNoTracking()
                 .Include(s => s.Emisor)
                 .AsQueryable();
 
@@ -92,6 +93,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<SuscripcionResponseDto> GetByIdAsync(int id)
         {
             var suscripcion = await _context.Suscripciones
+                .AsNoTracking()
                 .Include(s => s.Emisor)
                 .FirstOrDefaultAsync(s => s.Id == id)
                 ?? throw new InvalidOperationException($"Suscripción con Id {id} no encontrada");
@@ -190,6 +192,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<MiSuscripcionResponseDto> GetMiSuscripcionAsync(int emisorId)
         {
             var suscripcion = await _context.Suscripciones
+                .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.EmisorId == emisorId && s.Activo);
 
             if (suscripcion == null)
@@ -308,15 +311,17 @@ namespace FraFactu.Infrastructure.Services
         public async Task<byte[]> GenerarPdfPreviewAsync(int suscripcionId)
         {
             var suscripcion = await _context.Suscripciones
+                .AsNoTracking()
                 .Include(s => s.Emisor)
                 .FirstOrDefaultAsync(s => s.Id == suscripcionId)
                 ?? throw new InvalidOperationException($"Suscripción con Id {suscripcionId} no encontrada");
 
-            var config = await _context.ConfiguracionProveedor.FirstOrDefaultAsync();
+            var config = await _context.ConfiguracionProveedor.AsNoTracking().FirstOrDefaultAsync();
 
             // Crear factura temporal para la preview (no se guarda en BD)
             var anio = DateTime.UtcNow.Year;
             var ultimaFactura = await _context.FacturasSuscripcion
+                .AsNoTracking()
                 .Where(f => f.NumeroFactura.StartsWith($"INV-{anio}-"))
                 .OrderByDescending(f => f.NumeroFactura)
                 .FirstOrDefaultAsync();
@@ -349,11 +354,12 @@ namespace FraFactu.Infrastructure.Services
         public async Task<byte[]> GenerarPdfMiSuscripcionAsync(int emisorId)
         {
             var suscripcion = await _context.Suscripciones
+                .AsNoTracking()
                 .Include(s => s.Emisor)
                 .FirstOrDefaultAsync(s => s.EmisorId == emisorId && s.Activo)
                 ?? throw new InvalidOperationException("No tienes una suscripción activa");
 
-            var config = await _context.ConfiguracionProveedor.FirstOrDefaultAsync();
+            var config = await _context.ConfiguracionProveedor.AsNoTracking().FirstOrDefaultAsync();
 
             var hoy = DateTime.UtcNow;
             var inicioMes = new DateTime(hoy.Year, hoy.Month, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -361,6 +367,7 @@ namespace FraFactu.Infrastructure.Services
 
             // Buscar si ya existe una factura generada para este mes
             var facturaExistente = await _context.FacturasSuscripcion
+                .AsNoTracking()
                 .Where(f => f.SuscripcionId == suscripcion.Id
                     && f.PeriodoServicioInicio.Month == hoy.Month
                     && f.PeriodoServicioInicio.Year == hoy.Year)
@@ -474,6 +481,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<List<FacturaSuscripcionResponseDto>> GetHistorialFacturasAsync(int suscripcionId)
         {
             var facturas = await _context.FacturasSuscripcion
+                .AsNoTracking()
                 .Include(f => f.Suscripcion)
                     .ThenInclude(s => s.Emisor)
                 .Where(f => f.SuscripcionId == suscripcionId)

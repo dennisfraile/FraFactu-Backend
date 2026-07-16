@@ -33,6 +33,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<ProductoServicioDto?> GetByIdAsync(int id, int emisorId)
         {
             var productoServicio = await _context.ProductosServicios
+                .AsNoTracking()
                 .Include(p => p.Emisor)
                 .Include(p => p.UnidadMedida)
                 .Include(p => p.TipoItem)
@@ -51,6 +52,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<PaginatedResponse<ProductoServicioListDto>> GetAllAsync(PaginatedRequest request, int emisorId, int? sucursalId = null, int? categoriaId = null, int? marcaId = null, string? unidadMedida = null, string? tipo = null, bool incluirInactivos = false)
         {
             var query = _context.ProductosServicios
+                .AsNoTracking()
                 .Include(p => p.UnidadMedida)
                 .Include(p => p.TipoItem)
                 .Include(p => p.Categoria)
@@ -417,6 +419,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<List<ProductoServicioListDto>> SearchAsync(string searchTerm, int emisorId, int? sucursalId = null)
         {
             var query = _context.ProductosServicios
+                .AsNoTracking()
                 .Include(p => p.UnidadMedida)
                 .Include(p => p.TipoItem)
                 .Include(p => p.ProductoServicioSucursales)

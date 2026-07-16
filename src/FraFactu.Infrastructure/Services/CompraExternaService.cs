@@ -667,6 +667,7 @@ public class CompraExternaService : ICompraExternaService
     public async Task<CompraExternaDto> ObtenerPorIdAsync(int id, int emisorId)
     {
         var compra = await _context.ComprasExternas
+            .AsNoTracking()
             .Include(c => c.Proveedor)
             .Include(c => c.Sucursal) // Include Sucursal to check EmisorId
             .Include(c => c.Detalles)
@@ -704,6 +705,7 @@ public class CompraExternaService : ICompraExternaService
         bool sortDesc = true)
     {
         var query = _context.ComprasExternas
+            .AsNoTracking()
             .Include(c => c.Proveedor)
             .Include(c => c.Sucursal)
             .Include(c => c.Detalles)  // CRÍTICO: sin esto, Items = 0
@@ -783,6 +785,7 @@ public class CompraExternaService : ICompraExternaService
     public async Task<List<CompraExternaDto>> ObtenerPorProveedorAsync(int proveedorId, int emisorId, int limite = 10)
     {
         var compras = await _context.ComprasExternas
+            .AsNoTracking()
             .Include(c => c.Proveedor)
             .Include(c => c.Sucursal)
             .Where(c => c.ProveedorId == proveedorId && c.Sucursal.EmisorId == emisorId)
