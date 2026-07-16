@@ -4,6 +4,7 @@ using AutoMapper;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using FraFactu.Infrastructure.Helpers.Pagination;
+using FraFactu.Infrastructure.Helpers;
 using FraFactu.Application.DTOs.Common;
 using FraFactu.Application.DTOs.Receptores;
 using FraFactu.Application.Interfaces;
@@ -88,12 +89,12 @@ namespace FraFactu.Infrastructure.Services
             // Filtro por rango de fechas (FechaCreacion) — PostgreSQL requiere UTC
             if (fechaDesde.HasValue)
             {
-                var desde = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
+                var desde = FechaHelper.ToUtc(fechaDesde.Value.Date);
                 query = query.Where(r => r.FechaCreacion >= desde);
             }
             if (fechaHasta.HasValue)
             {
-                var hasta = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1), DateTimeKind.Utc);
+                var hasta = FechaHelper.ToUtc(fechaHasta.Value.Date.AddDays(1));
                 query = query.Where(r => r.FechaCreacion < hasta);
             }
 
