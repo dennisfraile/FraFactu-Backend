@@ -4,6 +4,7 @@ using FraFactu.Application.DTOs.Facturas;
 using FraFactu.Application.Interfaces;
 using FraFactu.Application.Services;
 using FraFactu.Infrastructure.Helpers.Pagination;
+using FraFactu.Infrastructure.Helpers;
 using FraFactu.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -154,14 +155,14 @@ namespace FraFactu.Infrastructure.Services
 
             if (fechaDesde.HasValue)
             {
-                var fechaDesdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
+                var fechaDesdeUtc = FechaHelper.ToUtc(fechaDesde.Value.Date);
                 query = query.Where(f => f.FechaEmision >= fechaDesdeUtc);
             }
 
             if (fechaHasta.HasValue)
             {
                 // Agregar un día para incluir todo el día final
-                var fechaHastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1), DateTimeKind.Utc);
+                var fechaHastaUtc = FechaHelper.ToUtc(fechaHasta.Value.Date.AddDays(1));
                 query = query.Where(f => f.FechaEmision < fechaHastaUtc);
             }
 
@@ -298,13 +299,13 @@ namespace FraFactu.Infrastructure.Services
             // Filtros de fecha
             if (fechaDesde.HasValue)
             {
-                var fechaDesdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
+                var fechaDesdeUtc = FechaHelper.ToUtc(fechaDesde.Value.Date);
                 query = query.Where(f => f.FechaEmision >= fechaDesdeUtc);
             }
 
             if (fechaHasta.HasValue)
             {
-                var fechaHastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1), DateTimeKind.Utc);
+                var fechaHastaUtc = FechaHelper.ToUtc(fechaHasta.Value.Date.AddDays(1));
                 query = query.Where(f => f.FechaEmision < fechaHastaUtc);
             }
 
@@ -392,13 +393,13 @@ namespace FraFactu.Infrastructure.Services
 
             if (fechaDesde.HasValue)
             {
-                var fechaDesdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
+                var fechaDesdeUtc = FechaHelper.ToUtc(fechaDesde.Value.Date);
                 query = query.Where(f => f.FechaEmision >= fechaDesdeUtc);
             }
 
             if (fechaHasta.HasValue)
             {
-                var fechaHastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1), DateTimeKind.Utc);
+                var fechaHastaUtc = FechaHelper.ToUtc(fechaHasta.Value.Date.AddDays(1));
                 query = query.Where(f => f.FechaEmision < fechaHastaUtc);
             }
 

@@ -4,6 +4,7 @@ using FraFactu.Application.Interfaces;
 using FraFactu.Application.Services;
 using FraFactu.Domain.Entities;
 using FraFactu.Domain.Enums;
+using FraFactu.Infrastructure.Helpers;
 using FraFactu.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -102,13 +103,13 @@ public class DteRecibidoService : IDteRecibidoService
 
         if (fechaDesde.HasValue)
         {
-            var desdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
+            var desdeUtc = FechaHelper.ToUtc(fechaDesde.Value.Date);
             query = query.Where(d => d.FechaEmision >= desdeUtc);
         }
 
         if (fechaHasta.HasValue)
         {
-            var hastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+            var hastaUtc = FechaHelper.ToUtc(fechaHasta.Value.Date.AddDays(1).AddTicks(-1));
             query = query.Where(d => d.FechaEmision <= hastaUtc);
         }
 

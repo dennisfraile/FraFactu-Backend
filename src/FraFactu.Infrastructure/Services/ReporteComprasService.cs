@@ -1,6 +1,7 @@
 using ClosedXML.Excel;
 using FraFactu.Application.Interfaces;
 using FraFactu.Domain.Enums;
+using FraFactu.Infrastructure.Helpers;
 using FraFactu.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -21,12 +22,10 @@ public class ReporteComprasService : IReporteComprasService
         _logger = logger;
     }
 
-    private static DateTime AsUtc(DateTime dt) => DateTime.SpecifyKind(dt, DateTimeKind.Utc);
-
     public async Task<byte[]> GenerarLibroComprasExcelAsync(int emisorId, DateTime desde, DateTime hasta)
     {
-        desde = AsUtc(desde);
-        hasta = AsUtc(hasta);
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
 
         var compras = await _context.ComprasExternas
             .AsNoTracking()
@@ -285,8 +284,8 @@ public class ReporteComprasService : IReporteComprasService
 
     public async Task<byte[]> GenerarLibroComprasCsvAsync(int emisorId, DateTime desde, DateTime hasta)
     {
-        desde = AsUtc(desde);
-        hasta = AsUtc(hasta);
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
 
         var compras = await _context.ComprasExternas
             .AsNoTracking()
@@ -476,8 +475,8 @@ public class ReporteComprasService : IReporteComprasService
 
     public async Task<byte[]> GenerarDetallePorProveedorExcelAsync(int emisorId, DateTime desde, DateTime hasta, int? proveedorId = null)
     {
-        desde = AsUtc(desde);
-        hasta = AsUtc(hasta);
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
 
         var query = _context.ComprasExternas
             .AsNoTracking()
@@ -555,8 +554,8 @@ public class ReporteComprasService : IReporteComprasService
 
     public async Task<byte[]> GenerarCruceComprasVsDtesExcelAsync(int emisorId, DateTime desde, DateTime hasta)
     {
-        desde = AsUtc(desde);
-        hasta = AsUtc(hasta);
+        desde = FechaHelper.ToUtc(desde);
+        hasta = FechaHelper.ToUtc(hasta);
 
         // Compras confirmadas en el período
         var compras = await _context.ComprasExternas

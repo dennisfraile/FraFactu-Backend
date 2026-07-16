@@ -1,6 +1,7 @@
 using FraFactu.Application.DTOs.Lotes;
 using FraFactu.Application.DTOs.Common;
 using FraFactu.Infrastructure.Helpers.Pagination;
+using FraFactu.Infrastructure.Helpers;
 using FraFactu.Application.Services;
 using FraFactu.Application.Interfaces;
 using FraFactu.Application.Interfaces.Hacienda;
@@ -829,13 +830,13 @@ public class LoteService : ILoteService
 
         if (fechaDesde.HasValue)
         {
-            var desdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
+            var desdeUtc = FechaHelper.ToUtc(fechaDesde.Value.Date);
             query = query.Where(l => l.FechaCreacion >= desdeUtc);
         }
 
         if (fechaHasta.HasValue)
         {
-            var hastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1), DateTimeKind.Utc);
+            var hastaUtc = FechaHelper.ToUtc(fechaHasta.Value.Date.AddDays(1));
             query = query.Where(l => l.FechaCreacion < hastaUtc);
         }
 
