@@ -40,13 +40,6 @@ builder.Services.AddTransient<CorrelationIdHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "FraFactu API",
-        Version = "v1",
-        Description = "API unificada de Facturación Electrónica (DTE - El Salvador) e Inventario"
-    });
-
     // Evita conflictos de schemaId cuando hay DTOs con el mismo nombre en
     // namespaces distintos (p. ej. TributoResumenInputDto en Retorno vs
     // OperacionesEspeciales): se usa el nombre completo saneado.
@@ -84,6 +77,7 @@ builder.Services.AddSwaggerGen(options =>
         AdditionalPropertiesAllowed = true
     });
 });
+builder.Services.ConfigureOptions<FraFactu.API.Swagger.ConfigureSwaggerOptions>();
 
 // Base de Datos
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -484,9 +478,15 @@ app.UseMiddleware<FraFactu.API.Middleware.CorrelationIdMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
+    var apiVersionProvider = app.Services
+        .GetRequiredService<Asp.Versioning.ApiExplorer.IApiVersionDescriptionProvider>();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Facturación Electrónica API v1");
+        foreach (var desc in apiVersionProvider.ApiVersionDescriptions)
+        {
+            options.SwaggerEndpoint($"/swagger/{desc.GroupName}/swagger.json",
+                $"FraFactu API {desc.GroupName.ToUpperInvariant()}");
+        }
         //options.RoutePrefix = string.Empty; // Swagger en la raíz
     });
 }
