@@ -28,6 +28,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<SucursalDto?> GetByIdAsync(int id, int emisorId)
         {
             var sucursal = await _context.Sucursales
+                .AsNoTracking()
                 .Include(s => s.Emisor)
                 .Include(s => s.Facturas)
                 .Where(s => s.Id == id && s.EmisorId == emisorId)
@@ -39,6 +40,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<List<SucursalListDto>> GetAllAsync(int emisorId)
         {
             var sucursales = await _context.Sucursales
+                .AsNoTracking()
                 .Where(s => s.EmisorId == emisorId)
                 .OrderBy(s => s.Codigo)
                 .ToListAsync();
