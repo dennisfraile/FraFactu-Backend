@@ -11,16 +11,13 @@ namespace FraFactu.API.Controllers
     public class HaciendaController : ControllerBase
     {
         private readonly IHaciendaApiService _haciendaService;
-        private readonly IHaciendaAuthService _haciendaAuthService;
         private readonly ILogger<HaciendaController> _logger;
 
         public HaciendaController(
             IHaciendaApiService haciendaService,
-            IHaciendaAuthService haciendaAuthService,
             ILogger<HaciendaController> logger)
         {
             _haciendaService = haciendaService;
-            _haciendaAuthService = haciendaAuthService;
             _logger = logger;
         }
         /// <summary>
