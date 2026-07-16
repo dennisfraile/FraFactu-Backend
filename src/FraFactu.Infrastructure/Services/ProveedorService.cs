@@ -81,6 +81,7 @@ public class ProveedorService : IProveedorService
     public async Task<ProveedorDto> ObtenerPorIdAsync(int id, int emisorId)
     {
         var proveedor = await _context.Proveedores
+            .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id && p.EmisorId == emisorId);
 
         if (proveedor == null)
@@ -92,6 +93,7 @@ public class ProveedorService : IProveedorService
     public async Task<ProveedorDto?> ObtenerPorNITAsync(string nit, int emisorId)
     {
         var proveedor = await _context.Proveedores
+            .AsNoTracking()
             .FirstOrDefaultAsync(p => p.NIT == nit && p.EmisorId == emisorId);
 
         return proveedor != null ? await MapToDtoAsync(proveedor) : null;
@@ -105,6 +107,7 @@ public class ProveedorService : IProveedorService
         bool? soloActivos = true)
     {
         var query = _context.Proveedores
+            .AsNoTracking()
             .Where(p => p.EmisorId == emisorId)
             .AsQueryable();
 

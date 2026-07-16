@@ -37,6 +37,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<PaginatedResponse<EmisorDto>> GetAllAsync(PaginatedRequest request)
         {
             var query = _context.Emisores
+                .AsNoTracking()
                 .Include(e => e.AmbienteDestino)
                 .Where(e => e.Activo)
                 .OrderByDescending(e => e.FechaCreacion)
@@ -64,6 +65,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<EmisorDto?> GetByIdAsync(int id)
         {
             var emisor = await _context.Emisores
+                .AsNoTracking()
                 .Include(e => e.AmbienteDestino)
                 .FirstOrDefaultAsync(e => e.Id == id && e.Activo);
 
@@ -92,6 +94,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<EmisorDto?> GetMiPerfilAsync(int emisorId)
         {
             var emisor = await _context.Emisores
+                .AsNoTracking()
                 .Include(e => e.AmbienteDestino)
                 .FirstOrDefaultAsync(e => e.Id == emisorId && e.Activo);
 

@@ -95,6 +95,7 @@ public class PlanCuotasService : IPlanCuotasService
     public async Task<List<PlanCuotasDto>> GetAllAsync(int emisorId, bool soloConSaldo)
     {
         var query = _ctx.Set<PlanCuotas>()
+            .AsNoTracking()
             .Include(p => p.Cuotas)
             .Include(p => p.Receptor)
             .Where(p => p.EmisorId == emisorId);
@@ -108,6 +109,7 @@ public class PlanCuotasService : IPlanCuotasService
     public async Task<PlanCuotasDto?> GetByIdAsync(int planId, int emisorId)
     {
         var plan = await _ctx.Set<PlanCuotas>()
+            .AsNoTracking()
             .Include(p => p.Cuotas)
             .Include(p => p.Receptor)
             .FirstOrDefaultAsync(p => p.Id == planId && p.EmisorId == emisorId);
@@ -220,6 +222,7 @@ public class PlanCuotasService : IPlanCuotasService
     public async Task<MoraEstimadaDto> EstimarMoraCuotaAsync(int planId, int numero, int emisorId)
     {
         var plan = await _ctx.Set<PlanCuotas>()
+            .AsNoTracking()
             .Include(p => p.Cuotas)
             .FirstOrDefaultAsync(p => p.Id == planId && p.EmisorId == emisorId)
             ?? throw new InvalidOperationException("Plan de cuotas no encontrado.");
@@ -227,7 +230,7 @@ public class PlanCuotasService : IPlanCuotasService
         var cuota = plan.Cuotas.FirstOrDefault(c => c.Activo && c.Numero == numero)
             ?? throw new InvalidOperationException($"La cuota {numero} no existe en el plan.");
 
-        var cfg = await _ctx.Set<ConfiguracionCuotas>().FirstOrDefaultAsync(c => c.EmisorId == plan.EmisorId);
+        var cfg = await _ctx.Set<ConfiguracionCuotas>().AsNoTracking().FirstOrDefaultAsync(c => c.EmisorId == plan.EmisorId);
         decimal tasa = cfg?.TasaMoraMensual ?? 0.03m;
         int diasGracia = cfg?.DiasGracia ?? 3;
         bool moraHabilitada = cfg?.MoraHabilitada ?? true;

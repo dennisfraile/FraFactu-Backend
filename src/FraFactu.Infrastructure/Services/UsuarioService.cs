@@ -41,6 +41,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<PaginatedResponse<UsuarioListDto>> GetAllAsync(PaginatedRequest request, int? emisorId = null, bool? soloActivos = null, List<string>? rolesPermitidos = null, List<int>? sucursalIds = null)
         {
             var query = _context.Usuarios
+                .AsNoTracking()
                 .Include(u => u.Rol)
                 .Include(u => u.Emisor)
                 .Include(u => u.UsuarioSucursales)
@@ -104,6 +105,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<UsuarioDto?> GetByIdAsync(int id, int? emisorId = null)
         {
             var query = _context.Usuarios
+                .AsNoTracking()
                 .Include(u => u.Rol)
                 .Include(u => u.Emisor)
                 .Include(u => u.UsuarioSucursales)

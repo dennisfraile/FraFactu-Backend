@@ -35,6 +35,7 @@ namespace FraFactu.Infrastructure.Services
         public async Task<ReceptorDto?> GetByIdAsync(int id, int emisorId)
         {
             var receptor = await _context.Receptores
+                .AsNoTracking()
                 .Include(r => r.Emisor)
                 .Include(r => r.TipoDocumento)
                 .Include(r => r.Departamento)
@@ -52,6 +53,7 @@ namespace FraFactu.Infrastructure.Services
             bool soloSujetosExcluidos = false)
         {
             var query = _context.Receptores
+                .AsNoTracking()
                 .Include(r => r.TipoDocumento)  // Include para TipoDocumentoNombre
                 .Where(r => r.EmisorId == emisorId)
                 .AsQueryable();
@@ -210,6 +212,7 @@ namespace FraFactu.Infrastructure.Services
         {
             var term = RemoveDiacritics(searchTerm.ToLower());
             var query = _context.Receptores
+                .AsNoTracking()
                 .Include(r => r.TipoDocumento)
                 .Where(r => r.EmisorId == emisorId && r.Activo);
 
