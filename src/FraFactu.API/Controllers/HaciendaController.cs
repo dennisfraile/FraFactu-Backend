@@ -23,46 +23,6 @@ namespace FraFactu.API.Controllers
             _haciendaAuthService = haciendaAuthService;
             _logger = logger;
         }
-
-        /// <summary>
-        /// Prueba de autenticación con Hacienda (temporal para debugging)
-        /// </summary>
-        [HttpGet("test-auth/{emisorId}")]
-        [AllowAnonymous] // Temporal para prueba rápida
-        public async Task<IActionResult> TestAuth(int emisorId)
-        {
-            try
-            {
-                _logger.LogInformation("[TEST-AUTH] Iniciando prueba de autenticación para emisorId={EmisorId}", emisorId);
-
-                var token = await _haciendaAuthService.ObtenerTokenAsync(emisorId);
-
-                _logger.LogInformation("[TEST-AUTH] Token obtenido exitosamente. Longitud={Length}", token?.Length ?? 0);
-
-                return Ok(new
-                {
-                    success = true,
-                    message = "Autenticación exitosa con Ministerio de Hacienda",
-                    emisorId,
-                    tokenLength = token?.Length ?? 0,
-                    tokenPreview = token?.Length > 50 ? $"{token.Substring(0, 50)}..." : token,
-                    timestamp = DateTime.UtcNow
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[TEST-AUTH] Error en prueba de autenticación para emisorId={EmisorId}", emisorId);
-                return BadRequest(new
-                {
-                    success = false,
-                    message = "Error al autenticar con Ministerio de Hacienda",
-                    error = ex.Message,
-                    emisorId,
-                    timestamp = DateTime.UtcNow
-                });
-            }
-        }
-
         /// <summary>
         /// Transmite un DTE individual al Ministerio de Hacienda
         /// </summary>
